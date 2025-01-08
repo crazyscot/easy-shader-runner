@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
   "runner",
-  "shaders/main",
+  "shader/shader",
 ]
 default-members = ["runner"]
 

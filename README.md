@@ -1,5 +1,5 @@
 # Template
-A template for an application using compute/vertex/fragment shaders with egui
+A template for an application using fragment and compute shaders with egui
 
 Uses
 [rust-gpu](https://github.com/Rust-GPU/rust-gpu),

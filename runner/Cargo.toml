@@ -17,7 +17,7 @@ use-compiled-tools = ["spirv-builder/use-compiled-tools"]
 
 [dependencies]
 cfg-if = "1.0.0"
-shared = { path = "../shaders/shared" }
+shared = { path = "../shader/shared" }
 futures = { version = "0.3", default-features = false, features = ["std", "executor"] }
 structopt = "0.3"
 wgpu = { version = "22.1.0", features = ["spirv", "vulkan-portability"] }

@@ -2400,6 +2400,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "shader"
+version = "0.0.0"
+dependencies = [
+ "shared",
+ "spirv-std",
+]
+
+[[package]]
 name = "shared"
 version = "0.0.0"
 dependencies = [
@@ -2672,14 +2680,6 @@ dependencies = [
  "once_cell",
  "rustix",
  "windows-sys 0.59.0",
-]
-
-[[package]]
-name = "template"
-version = "0.0.0"
-dependencies = [
- "shared",
- "spirv-std",
 ]
 
 [[package]]

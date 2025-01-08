@@ -53,7 +53,7 @@ pub fn maybe_watch(
         );
         std::env::set_var("PROFILE", env!("PROFILE"));
         let manifest_dir = option_env!("SHADERS_DIR").unwrap_or(env!("CARGO_MANIFEST_DIR"));
-        let crate_path = [manifest_dir, "..", "shaders", "main"]
+        let crate_path = [manifest_dir, "..", "shader", "shader"]
             .iter()
             .copied()
             .collect::<PathBuf>();
