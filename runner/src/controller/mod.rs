@@ -3,7 +3,6 @@ use crate::{
     user_event::UserEvent,
     Options,
 };
-use bytemuck::Zeroable;
 use egui::Context;
 use egui_winit::winit::{
     dpi::{PhysicalPosition, PhysicalSize},
@@ -46,8 +45,8 @@ impl Controller {
         Self {
             size,
             start: now,
-            fragment_constants: FragmentConstants::zeroed(),
-            compute_constants: ComputeConstants::zeroed(),
+            fragment_constants: Default::default(),
+            compute_constants: Default::default(),
             cursor: Vec2::ZERO,
             prev_cursor: Vec2::ZERO,
             mouse_button_pressed: 0,
