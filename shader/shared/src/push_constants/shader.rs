@@ -1,7 +1,7 @@
 use super::{Bool, Size, Vec2};
 use bytemuck::NoUninit;
 
-#[derive(Copy, Clone, Default, NoUninit)]
+#[derive(Copy, Clone, Debug, Default, NoUninit)]
 #[repr(C)]
 pub struct FragmentConstants {
     pub size: Size,
@@ -19,7 +19,7 @@ impl FragmentConstants {
     }
 }
 
-#[derive(Copy, Clone, Default, NoUninit)]
+#[derive(Copy, Clone, Debug, Default, NoUninit)]
 #[repr(C)]
 pub struct ComputeConstants {
     pub size: Size,

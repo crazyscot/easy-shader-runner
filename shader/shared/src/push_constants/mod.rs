@@ -3,7 +3,7 @@ use spirv_std::glam;
 
 pub mod shader;
 
-#[derive(Copy, Clone, Default, NoUninit)]
+#[derive(Copy, Clone, Debug, Default, NoUninit)]
 #[repr(C)]
 pub struct Size {
     pub width: u32,
@@ -27,7 +27,7 @@ impl From<winit::dpi::PhysicalSize<u32>> for Size {
     }
 }
 
-#[derive(Copy, Clone, Default, NoUninit, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, NoUninit)]
 #[repr(C)]
 pub struct Vec2 {
     pub x: f32,
@@ -50,7 +50,7 @@ impl Into<glam::Vec2> for Vec2 {
     }
 }
 
-#[derive(Copy, Clone, Default, NoUninit, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, NoUninit)]
 #[repr(C)]
 pub struct UVec2 {
     pub x: u32,
@@ -69,7 +69,7 @@ impl Into<glam::UVec2> for UVec2 {
     }
 }
 
-#[derive(Copy, Clone, Default, NoUninit)]
+#[derive(Copy, Clone, Debug, Default, NoUninit)]
 #[repr(C)]
 pub struct Vec3 {
     pub x: f32,
@@ -93,7 +93,7 @@ impl Into<glam::Vec3> for Vec3 {
     }
 }
 
-#[derive(Copy, Clone, Default, NoUninit)]
+#[derive(Copy, Clone, Debug, Default, NoUninit)]
 #[repr(C)]
 pub struct Vec4 {
     pub x: f32,
@@ -119,7 +119,7 @@ impl Into<glam::Vec4> for Vec4 {
     }
 }
 
-#[derive(Copy, Clone, Default, NoUninit)]
+#[derive(Copy, Clone, Debug, Default, NoUninit)]
 #[repr(C)]
 pub struct Quat {
     pub x: f32,
@@ -145,7 +145,7 @@ impl Into<glam::Quat> for Quat {
     }
 }
 
-#[derive(Copy, Clone, Default, NoUninit)]
+#[derive(Copy, Clone, Debug, Default, NoUninit)]
 #[repr(C)]
 pub struct Mat4 {
     pub x_axis: Vec4,
@@ -183,7 +183,7 @@ impl Into<glam::Mat4> for Mat4 {
     }
 }
 
-#[derive(Copy, Clone, Default, NoUninit)]
+#[derive(Copy, Clone, Debug, Default, NoUninit)]
 #[repr(C)]
 pub struct Bool {
     pub value: u32,
