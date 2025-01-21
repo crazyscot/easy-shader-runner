@@ -357,7 +357,7 @@ fn create_pipeline(
         layout: Some(&pipeline_layouts.render),
         vertex: wgpu::VertexState {
             module: vs_module,
-            entry_point: vs_entry_point,
+            entry_point: Some(vs_entry_point),
             buffers: &[],
             compilation_options: Default::default(),
         },
@@ -378,7 +378,7 @@ fn create_pipeline(
         },
         fragment: Some(wgpu::FragmentState {
             module: fs_module,
-            entry_point: fs_entry_point,
+            entry_point: Some(fs_entry_point),
             targets: &[Some(wgpu::ColorTargetState {
                 format: surface_format,
                 blend: None,
@@ -393,7 +393,7 @@ fn create_pipeline(
         label: None,
         layout: Some(&pipeline_layouts.compute),
         module: &cs_module,
-        entry_point: cs_entry_point,
+        entry_point: Some(cs_entry_point),
         compilation_options: Default::default(),
         cache: None,
     });

@@ -16,7 +16,7 @@ use shared::{UI_MENU_HEIGHT, UI_SIDEBAR_WIDTH};
 use std::time::Instant;
 
 pub struct Controller {
-    size: PhysicalSize<u32>,
+    size: UVec2,
     start: Instant,
     fragment_constants: FragmentConstants,
     compute_constants: ComputeConstants,
@@ -34,10 +34,7 @@ pub struct Controller {
 impl Controller {
     pub fn new(size: PhysicalSize<u32>, options: &Options) -> Self {
         let now = Instant::now();
-        let size = PhysicalSize {
-            width: size.width - UI_SIDEBAR_WIDTH,
-            height: size.height - UI_MENU_HEIGHT,
-        };
+        let size = uvec2(size.width - UI_SIDEBAR_WIDTH, size.height - UI_MENU_HEIGHT);
 
         let debug = options.debug;
         let speed = normalize_speed_down(!debug as u32 as f32);
@@ -60,10 +57,7 @@ impl Controller {
     }
 
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
-        self.size = PhysicalSize {
-            width: size.width - UI_SIDEBAR_WIDTH,
-            height: size.height - UI_MENU_HEIGHT,
-        };
+        self.size = uvec2(size.width - UI_SIDEBAR_WIDTH, size.height - UI_MENU_HEIGHT);
     }
 
     pub fn mouse_move(&mut self, position: PhysicalPosition<f64>) {

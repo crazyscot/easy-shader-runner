@@ -1,4 +1,4 @@
-use super::{Bool, Size, Vec2};
+use super::*;
 use bytemuck::NoUninit;
 
 #[derive(Copy, Clone, Debug, Default, NoUninit)]

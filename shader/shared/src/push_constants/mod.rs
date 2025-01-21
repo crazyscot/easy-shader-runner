@@ -20,10 +20,12 @@ impl Size {
     }
 }
 
-#[cfg(not(target_arch = "spirv"))]
-impl From<winit::dpi::PhysicalSize<u32>> for Size {
-    fn from(winit::dpi::PhysicalSize { width, height }: winit::dpi::PhysicalSize<u32>) -> Self {
-        Self { width, height }
+impl From<glam::UVec2> for Size {
+    fn from(v: glam::UVec2) -> Self {
+        Self {
+            width: v.x,
+            height: v.y,
+        }
     }
 }
 
