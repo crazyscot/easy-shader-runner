@@ -204,8 +204,8 @@ async fn create_graphics(builder: Builder, event_loop: &ActiveEventLoop) {
         event_loop
             .create_window(
                 Window::default_attributes()
-                    .with_title("sandsim")
-                    .with_name("sandsim", "")
+                    .with_title(crate::TITLE)
+                    .with_name(crate::TITLE, "")
                     .with_inner_size(PhysicalSize::new(1280.0, 720.0)),
             )
             .unwrap(),

@@ -15,8 +15,10 @@ mod shader;
 mod ui;
 mod user_event;
 
+const TITLE: &str = "runner";
+
 #[derive(StructOpt, Clone, Copy)]
-#[structopt(name = "sandsim")]
+#[structopt(name = TITLE)]
 pub struct Options {
     // Default to true after the following is fixed
     // https://github.com/gfx-rs/wgpu/issues/5128
