@@ -54,8 +54,10 @@
           src = ./.;
           cargoLock.lockFile = ./Cargo.lock;
           cargoLock.outputHashes = {
-            "rustc_codegen_spirv-0.9.0" = "sha256-Yu/126ByKt+S0cmyeqeKyIfx4Xb616LnrL/6loYjJzs=";
+            "rustc_codegen_spirv-0.9.0" = "sha256-TTXPKab1/tinSB0raa4pIpgHVixaH5JoG8hymUH7pow=";
           };
+          buildNoDefaultFeatures = true;
+          buildFeatures = [ "use-compiled-tools" ];
           dontCargoSetupPostUnpack = true;
           postUnpack = ''
             mkdir -p .cargo
@@ -65,7 +67,7 @@
           '';
           nativeBuildInputs = [pkgs.makeWrapper];
           configurePhase = ''
-            export SHADERS_DIR="$out/repo/shaders"
+            export SHADERS_DIR="$out/repo/shader"
             export SHADERS_TARGET_DIR=${shadersCompilePath}
           '';
           fixupPhase = ''

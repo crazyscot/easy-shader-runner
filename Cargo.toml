@@ -1,9 +1,6 @@
 [workspace]
 resolver = "2"
-members = [
-  "runner",
-  "shader/shader",
-]
+members = ["runner", "shader/shader"]
 default-members = ["runner"]
 
 [workspace.package]
@@ -13,7 +10,7 @@ edition = "2021"
 license = "MIT"
 
 [workspace.dependencies]
-bytemuck = "1.21.0"
+bytemuck = { version = "1.21.0", default-features = false }
 
 [workspace.dependencies.spirv-std]
 git = "https://github.com/Rust-GPU/rust-gpu"

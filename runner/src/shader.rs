@@ -5,7 +5,7 @@ pub struct CompiledShaderModule {
 }
 
 pub fn maybe_watch(
-    on_watch: Option<Box<dyn FnMut(CompiledShaderModule) + Send + 'static>>,
+    #[cfg(feature = "watch")] mut on_watch: Box<dyn FnMut(CompiledShaderModule) + Send + 'static>,
 ) -> CompiledShaderModule {
     {
         use spirv_builder::{CompileResult, MetadataPrintout, SpirvBuilder};
@@ -30,26 +30,24 @@ pub fn maybe_watch(
         let builder = SpirvBuilder::new(crate_path, "spirv-unknown-vulkan1.1")
             .print_metadata(MetadataPrintout::None)
             .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::SilentExit);
-        let initial_result = if let Some(mut f) = on_watch {
-            builder
-                .watch(move |compile_result| f(handle_compile_result(compile_result)))
-                .expect("Configuration is correct for watching")
-        } else {
-            builder.build().unwrap()
-        };
         fn handle_compile_result(compile_result: CompileResult) -> CompiledShaderModule {
             let path = compile_result.module.unwrap_single();
             let data = std::fs::read(path).unwrap();
             // FIXME(eddyb) this reallocates all the data pointlessly, there is
             // not a good reason to use `ShaderModuleDescriptorSpirV` specifically.
             let spirv = Cow::Owned(wgpu::util::make_spirv_raw(&data).into_owned());
-            // let spirv = wgpu::util::make_spirv(&data);
             let module = wgpu::ShaderModuleDescriptorSpirV {
                 label: None,
                 source: spirv,
             };
             CompiledShaderModule { module }
         }
+        #[cfg(feature = "watch")]
+        let initial_result = builder
+            .watch(move |compile_result| on_watch(handle_compile_result(compile_result)))
+            .expect("Configuration is correct for watching");
+        #[cfg(not(feature = "watch"))]
+        let initial_result = builder.build().unwrap();
         handle_compile_result(initial_result)
     }
 }

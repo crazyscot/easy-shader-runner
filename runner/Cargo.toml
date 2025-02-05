@@ -11,20 +11,21 @@ crate-type = ["lib", "cdylib"]
 
 # See rustc_codegen_spirv/Cargo.toml for details on these features
 [features]
-default = ["use-compiled-tools"]
+default = ["use-compiled-tools", "watch"]
 use-installed-tools = ["spirv-builder/use-installed-tools"]
 use-compiled-tools = ["spirv-builder/use-compiled-tools"]
+watch = ["spirv-builder/watch"]
 
 [dependencies]
 cfg-if = "1.0.0"
 shared = { path = "../shader/shared" }
-futures = { version = "0.3", default-features = false, features = ["std", "executor"] }
-structopt = "0.3"
-wgpu = { version = "23.0.1", features = ["spirv", "vulkan-portability"] }
+futures = { version = "0.3", default-features = false, features = ["executor"] }
+structopt = { version = "0.3.26", default-features = false }
+wgpu = { version = "23.0.1", default-features = false }
 bytemuck = { workspace = true }
 egui = "0.30.0"
 egui-wgpu = "0.30.0"
 egui-winit = "0.30.0"
 glam = "0.29.2"
 env_logger = "0.10.0"
-spirv-builder = { workspace = true, features = ["watch"] }
+spirv-builder = { workspace = true }
