@@ -26,13 +26,5 @@ egui = "0.30.0"
 egui-wgpu = "0.30.0"
 egui-winit = "0.30.0"
 glam = "0.29.2"
-
-[target.'cfg(not(any(target_arch = "wasm32")))'.dependencies]
 env_logger = "0.10.0"
 spirv-builder = { workspace = true, features = ["watch"] }
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-web-sys = "0.3.60"
-console_error_panic_hook = "0.1.6"
-console_log = "0.2.0"
-wasm-bindgen-futures = "0.4.18"

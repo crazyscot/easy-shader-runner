@@ -9,7 +9,6 @@ use crate::{
 use egui_winit::winit::{dpi::PhysicalSize, window::Window};
 use wgpu::{util::DeviceExt, BindGroupLayout, TextureView};
 
-#[cfg(not(target_arch = "wasm32"))]
 mod shaders {
     #[allow(non_upper_case_globals)]
     pub const main_fs: &str = "main_fs";
@@ -17,10 +16,6 @@ mod shaders {
     pub const main_vs: &str = "main_vs";
     #[allow(non_upper_case_globals)]
     pub const main_cs: &str = "main_cs";
-}
-#[cfg(target_arch = "wasm32")]
-mod shaders {
-    include!(concat!(env!("OUT_DIR"), "/entry_points.rs"));
 }
 
 struct Pipelines {

@@ -33,11 +33,8 @@ impl CompiledShaderModules {
 
 pub fn maybe_watch(
     options: &Options,
-    #[cfg(not(target_arch = "wasm32"))] on_watch: Option<
-        Box<dyn FnMut(CompiledShaderModules) + Send + 'static>,
-    >,
+    on_watch: Option<Box<dyn FnMut(CompiledShaderModules) + Send + 'static>>,
 ) -> CompiledShaderModules {
-    #[cfg(not(target_arch = "wasm32"))]
     {
         use spirv_builder::{CompileResult, MetadataPrintout, SpirvBuilder};
         use std::path::PathBuf;
