@@ -2,7 +2,7 @@ use crate::{
     context::GraphicsContext,
     controller::Controller,
     render_pass::RenderPass,
-    shader::CompiledShaderModules,
+    shader::CompiledShaderModule,
     ui::{Ui, UiState},
     user_event::UserEvent,
     Options,
@@ -29,7 +29,7 @@ pub struct Graphics {
 
 pub struct Builder {
     event_proxy: EventLoopProxy<UserEvent>,
-    compiled_shader_modules: CompiledShaderModules,
+    compiled_shader_module: CompiledShaderModule,
     options: Options,
 }
 
@@ -42,12 +42,12 @@ pub enum App {
 impl App {
     pub fn new(
         event_proxy: EventLoopProxy<UserEvent>,
-        compiled_shader_modules: CompiledShaderModules,
+        compiled_shader_module: CompiledShaderModule,
         options: Options,
     ) -> Self {
         Self::Builder(Builder {
             event_proxy,
-            compiled_shader_modules,
+            compiled_shader_module,
             options,
         })
     }
@@ -130,7 +130,7 @@ impl App {
         gfx.ui.consumes_event(&gfx.window, event)
     }
 
-    pub fn new_module(&mut self, new_module: CompiledShaderModules) {
+    pub fn new_module(&mut self, new_module: CompiledShaderModule) {
         let Self::Graphics(gfx) = self else {
             return;
         };
@@ -211,7 +211,7 @@ async fn create_graphics(builder: Builder, event_loop: &ActiveEventLoop) {
             .unwrap(),
     );
 
-    let ctx = GraphicsContext::new(window.clone(), &builder.options).await;
+    let ctx = GraphicsContext::new(window.clone()).await;
 
     let ui = Ui::new(window.clone(), builder.event_proxy.clone());
 
@@ -219,12 +219,7 @@ async fn create_graphics(builder: Builder, event_loop: &ActiveEventLoop) {
 
     let controller = Controller::new(window.inner_size(), &builder.options);
 
-    let rpass = RenderPass::new(
-        &ctx,
-        builder.compiled_shader_modules,
-        builder.options,
-        &controller.buffers(),
-    );
+    let rpass = RenderPass::new(&ctx, builder.compiled_shader_module, &controller.buffers());
 
     let gfx = Graphics {
         rpass,

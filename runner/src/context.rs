@@ -1,4 +1,3 @@
-use crate::Options;
 use egui_winit::winit::{dpi::PhysicalSize, window::Window};
 use std::sync::Arc;
 
@@ -10,7 +9,7 @@ pub struct GraphicsContext {
 }
 
 impl GraphicsContext {
-    pub async fn new(window: Arc<Window>, options: &Options) -> GraphicsContext {
+    pub async fn new(window: Arc<Window>) -> GraphicsContext {
         let backends = wgpu::util::backend_bits_from_env()
             .unwrap_or(wgpu::Backends::VULKAN | wgpu::Backends::METAL);
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -33,10 +32,7 @@ impl GraphicsContext {
         .await
         .expect("Failed to find an appropriate adapter");
 
-        let mut features = wgpu::Features::PUSH_CONSTANTS;
-        if !options.validate_spirv {
-            features |= wgpu::Features::SPIRV_SHADER_PASSTHROUGH;
-        }
+        let features = wgpu::Features::PUSH_CONSTANTS | wgpu::Features::SPIRV_SHADER_PASSTHROUGH;
         let limits = wgpu::Limits {
             max_push_constant_size: 128,
             ..Default::default()
