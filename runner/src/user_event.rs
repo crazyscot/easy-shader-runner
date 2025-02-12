@@ -1,8 +1,7 @@
 use crate::app::Graphics;
-use crate::shader::CompiledShaderModule;
 
 pub enum UserEvent {
-    NewModule(CompiledShaderModule),
+    NewModule(std::path::PathBuf),
     SetVSync(bool),
     CreateWindow(Graphics),
 }

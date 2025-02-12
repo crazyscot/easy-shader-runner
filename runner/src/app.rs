@@ -2,7 +2,6 @@ use crate::{
     context::GraphicsContext,
     controller::Controller,
     render_pass::RenderPass,
-    shader::CompiledShaderModule,
     ui::{Ui, UiState},
     user_event::UserEvent,
     Options,
@@ -16,6 +15,7 @@ use egui_winit::winit::{
     platform::wayland::*,
     window::{Window, WindowId},
 };
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub struct Graphics {
@@ -29,7 +29,7 @@ pub struct Graphics {
 
 pub struct Builder {
     event_proxy: EventLoopProxy<UserEvent>,
-    compiled_shader_module: CompiledShaderModule,
+    shader_path: PathBuf,
     options: Options,
 }
 
@@ -42,12 +42,12 @@ pub enum App {
 impl App {
     pub fn new(
         event_proxy: EventLoopProxy<UserEvent>,
-        compiled_shader_module: CompiledShaderModule,
+        shader_path: PathBuf,
         options: Options,
     ) -> Self {
         Self::Builder(Builder {
             event_proxy,
-            compiled_shader_module,
+            shader_path,
             options,
         })
     }
@@ -130,11 +130,11 @@ impl App {
         gfx.ui.consumes_event(&gfx.window, event)
     }
 
-    pub fn new_module(&mut self, new_module: CompiledShaderModule) {
+    pub fn new_module(&mut self, shader_path: &Path) {
         let Self::Graphics(gfx) = self else {
             return;
         };
-        gfx.rpass.new_module(&gfx.ctx, new_module);
+        gfx.rpass.new_module(&gfx.ctx, shader_path);
         gfx.window.request_redraw();
     }
 
@@ -193,7 +193,7 @@ impl ApplicationHandler<UserEvent> for App {
                 gfx.window.request_redraw();
                 *self = Self::Graphics(gfx);
             }
-            UserEvent::NewModule(new_module) => self.new_module(new_module),
+            UserEvent::NewModule(shader_path) => self.new_module(&shader_path),
             UserEvent::SetVSync(enable) => self.set_vsync(enable),
         }
     }
@@ -219,7 +219,7 @@ async fn create_graphics(builder: Builder, event_loop: &ActiveEventLoop) {
 
     let controller = Controller::new(window.inner_size(), &builder.options);
 
-    let rpass = RenderPass::new(&ctx, builder.compiled_shader_module, &controller.buffers());
+    let rpass = RenderPass::new(&ctx, &builder.shader_path, &controller.buffers());
 
     let gfx = Graphics {
         rpass,

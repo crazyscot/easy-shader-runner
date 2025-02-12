@@ -1,7 +1,4 @@
-use crate::{
-    shader::{maybe_watch, CompiledShaderModule},
-    user_event::UserEvent,
-};
+use crate::shader::compile_shader;
 use egui_winit::winit::event_loop::EventLoop;
 use structopt::StructOpt;
 
@@ -33,28 +30,11 @@ pub fn main() {
     let event_loop = EventLoop::with_user_event().build().unwrap();
 
     // Build the shader before we pop open a window, since it might take a while.
-    let initial_shader = maybe_watch(
+    let shader_path = compile_shader(
         #[cfg(feature = "watch")]
-        {
-            let proxy = event_loop.create_proxy();
-            Box::new(move |res| {
-                if proxy.send_event(UserEvent::NewModule(res)).is_err() {
-                    panic!("Event loop dead");
-                }
-            })
-        },
+        event_loop.create_proxy(),
     );
 
-    run(options, event_loop, initial_shader);
-}
-
-fn run(
-    options: Options,
-    event_loop: EventLoop<UserEvent>,
-    compiled_shader_module: CompiledShaderModule,
-) {
-    let mut app = app::App::new(event_loop.create_proxy(), compiled_shader_module, options);
-    if let Result::Err(e) = event_loop.run_app(&mut app) {
-        eprintln!("Event loop Error: {e}")
-    }
+    let mut app = app::App::new(event_loop.create_proxy(), shader_path, options);
+    event_loop.run_app(&mut app).unwrap()
 }

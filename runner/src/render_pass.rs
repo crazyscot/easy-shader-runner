@@ -2,10 +2,10 @@ use crate::{
     bind_group_buffer::{BindGroupBufferType, BufferData, SSBO},
     context::GraphicsContext,
     controller::Controller,
-    shader::CompiledShaderModule,
     ui::{Ui, UiState},
 };
 use egui_winit::winit::{dpi::PhysicalSize, window::Window};
+use std::path::Path;
 use wgpu::{util::DeviceExt, BindGroupLayout, TextureView};
 
 struct Pipelines {
@@ -26,18 +26,14 @@ pub struct RenderPass {
 }
 
 impl RenderPass {
-    pub fn new(
-        ctx: &GraphicsContext,
-        compiled_shader_module: CompiledShaderModule,
-        buffer_data: &BufferData,
-    ) -> Self {
+    pub fn new(ctx: &GraphicsContext, shader_path: &Path, buffer_data: &BufferData) -> Self {
         let bind_group_layouts = create_bind_group_layouts(ctx, buffer_data);
         let pipeline_layouts = create_pipeline_layouts(ctx, &bind_group_layouts);
         let pipelines = create_pipeline(
             &ctx.device,
             &pipeline_layouts,
             ctx.config.format,
-            compiled_shader_module,
+            shader_path,
         );
         let bind_groups = maybe_create_bind_groups(ctx, buffer_data, &bind_group_layouts);
 
@@ -239,12 +235,12 @@ impl RenderPass {
         ctx.queue.submit(Some(encoder.finish()));
     }
 
-    pub fn new_module(&mut self, ctx: &GraphicsContext, new_module: CompiledShaderModule) {
+    pub fn new_module(&mut self, ctx: &GraphicsContext, shader_path: &Path) {
         self.pipelines = create_pipeline(
             &ctx.device,
             &self.pipeline_layouts,
             ctx.config.format,
-            new_module,
+            shader_path,
         );
     }
 }
@@ -288,10 +284,15 @@ fn create_pipeline(
     device: &wgpu::Device,
     pipeline_layouts: &PipelineLayouts,
     surface_format: wgpu::TextureFormat,
-    compiled_shader_module: CompiledShaderModule,
+    shader_path: &Path,
 ) -> Pipelines {
-    let module = unsafe { &device.create_shader_module_spirv(&compiled_shader_module.module) };
-
+    let data = std::fs::read(shader_path).unwrap();
+    let module = unsafe {
+        &device.create_shader_module_spirv(&wgpu::ShaderModuleDescriptorSpirV {
+            label: None,
+            source: wgpu::util::make_spirv_raw(&data),
+        })
+    };
     let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: None,
         layout: Some(&pipeline_layouts.render),
