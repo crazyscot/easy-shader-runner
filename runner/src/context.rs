@@ -10,27 +10,15 @@ pub struct GraphicsContext {
 
 impl GraphicsContext {
     pub async fn new(window: Arc<Window>) -> GraphicsContext {
-        let backends = wgpu::util::backend_bits_from_env()
-            .unwrap_or(wgpu::Backends::VULKAN | wgpu::Backends::METAL);
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends,
-            dx12_shader_compiler: wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default(),
-            flags: wgpu::InstanceFlags::default(),
-            gles_minor_version: wgpu::Gles3MinorVersion::Automatic,
-        });
-
+        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::from_env_or_default());
         let inner_size = window.inner_size();
         let initial_surface = instance
             .create_surface(window)
             .expect("Failed to create surface from window");
-
-        let adapter = wgpu::util::initialize_adapter_from_env_or_default(
-            &instance,
-            // Request an adapter which can render to our surface
-            Some(&initial_surface),
-        )
-        .await
-        .expect("Failed to find an appropriate adapter");
+        let adapter =
+            wgpu::util::initialize_adapter_from_env_or_default(&instance, Some(&initial_surface))
+                .await
+                .expect("Failed to find an appropriate adapter");
 
         let features = wgpu::Features::PUSH_CONSTANTS | wgpu::Features::SPIRV_SHADER_PASSTHROUGH;
         let limits = wgpu::Limits {
@@ -38,7 +26,6 @@ impl GraphicsContext {
             ..Default::default()
         };
 
-        // Create the logical device and command queue
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
