@@ -13,22 +13,10 @@ pub struct FragmentConstants {
     pub debug: Bool,
 }
 
-impl FragmentConstants {
-    pub fn mem_size() -> usize {
-        core::mem::size_of::<Self>()
-    }
-}
-
 #[derive(Copy, Clone, Debug, Default, NoUninit)]
 #[repr(C)]
 pub struct ComputeConstants {
     pub size: Size,
     pub time: f32,
     pub zoom: f32,
-}
-
-impl ComputeConstants {
-    pub fn mem_size() -> usize {
-        core::mem::size_of::<Self>()
-    }
 }

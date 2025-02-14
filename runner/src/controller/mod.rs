@@ -105,8 +105,8 @@ impl Controller {
             size: self.size.into(),
             time: self.start.elapsed().as_secs_f32(),
             mouse_button_pressed: self.mouse_button_pressed,
-            cursor: self.cursor.into(),
-            prev_cursor: self.prev_cursor.into(),
+            cursor: self.cursor,
+            prev_cursor: self.prev_cursor,
             zoom: self.zoom,
             debug: self.debug.into(),
         };

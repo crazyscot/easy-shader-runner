@@ -286,8 +286,8 @@ fn create_pipeline(
     surface_format: wgpu::TextureFormat,
     shader_path: &Path,
 ) -> Pipelines {
-    let data = std::fs::read(shader_path).unwrap();
     let module = unsafe {
+        let data = std::fs::read(shader_path).unwrap();
         &device.create_shader_module_spirv(&wgpu::ShaderModuleDescriptorSpirV {
             label: None,
             source: wgpu::util::make_spirv_raw(&data),
@@ -396,7 +396,13 @@ fn create_pipeline_layouts(
     };
     use shared::push_constants::shader::*;
     PipelineLayouts {
-        render: create(wgpu::ShaderStages::FRAGMENT, FragmentConstants::mem_size()),
-        compute: create(wgpu::ShaderStages::COMPUTE, ComputeConstants::mem_size()),
+        render: create(
+            wgpu::ShaderStages::FRAGMENT,
+            std::mem::size_of::<FragmentConstants>(),
+        ),
+        compute: create(
+            wgpu::ShaderStages::COMPUTE,
+            std::mem::size_of::<ComputeConstants>(),
+        ),
     }
 }
