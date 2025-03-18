@@ -12,6 +12,7 @@ use std::sync::Arc;
 pub struct UiState {
     pub fps: usize,
     pub show_fps: bool,
+    #[cfg(not(target_arch = "wasm32"))]
     pub vsync: bool,
 }
 
@@ -20,6 +21,7 @@ impl UiState {
         Self {
             fps: 0,
             show_fps: true,
+            #[cfg(not(target_arch = "wasm32"))]
             vsync: true,
         }
     }
@@ -77,6 +79,7 @@ impl Ui {
         (clipped_primitives, full_output.textures_delta)
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     fn send_event(&self, event: UserEvent) {
         let _ = self.event_proxy.send_event(event);
     }
@@ -86,6 +89,7 @@ impl Ui {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("Settings", |ui| {
                     ui.checkbox(&mut ui_state.show_fps, "fps counter");
+                    #[cfg(not(target_arch = "wasm32"))]
                     if ui.checkbox(&mut ui_state.vsync, "V-Sync").clicked() {
                         self.send_event(UserEvent::SetVSync(ui_state.vsync));
                     }

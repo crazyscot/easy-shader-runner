@@ -1,10 +1,5 @@
 # Template
-A template for an application using fragment and compute shaders with egui
-
-Uses
-[rust-gpu](https://github.com/Rust-GPU/rust-gpu),
-[wgpu](https://github.com/gfx-rs/wgpu), and
-[egui](https://github.com/emilk/egui)
+A template for a [wgpu](https://github.com/gfx-rs/wgpu) application with [egui](https://github.com/emilk/egui) and [rust-gpu](https://github.com/Rust-GPU/rust-gpu) shaders
 
 ## Try it out
 ```bash
@@ -12,10 +7,21 @@ nix run github:abel465/rust-gpu-template
 ```
 
 ## Development
-With shader hot reloading
+#### Set up environment
 ```bash
 git clone https://github.com/abel465/rust-gpu-template.git
 cd rust-gpu-template/
 nix develop
-cargo run --release
+```
+
+### Native
+```bash
+cargo run
+```
+
+### Wasm
+```bash
+cd wasm-app
+wasm-pack build ../runner/ -- --no-default-features --features emulate_constants
+npm run dev
 ```

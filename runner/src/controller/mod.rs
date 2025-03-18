@@ -1,5 +1,5 @@
 use crate::{
-    bind_group_buffer::{BindGroupBufferType, BufferData, SSBO},
+    bind_group_buffer::{BindGroupBufferType, BufferDescriptor, SSBO},
     user_event::UserEvent,
     Options,
 };
@@ -13,7 +13,7 @@ use egui_winit::winit::{
 use glam::*;
 use shared::push_constants::shader::*;
 use shared::{UI_MENU_HEIGHT, UI_SIDEBAR_WIDTH};
-use std::time::Instant;
+use web_time::Instant;
 
 pub struct Controller {
     size: UVec2,
@@ -156,13 +156,14 @@ impl Controller {
         }
     }
 
-    pub fn buffers(&self) -> BufferData {
-        BufferData {
-            bind_group_buffers: vec![BindGroupBufferType::SSBO(SSBO {
+    pub fn buffers(&self) -> Vec<BufferDescriptor> {
+        vec![BufferDescriptor {
+            buffer_type: BindGroupBufferType::SSBO(SSBO {
                 data: bytemuck::cast_slice(&self.buffer[..]),
                 read_only: false,
-            })],
-        }
+            }),
+            shader_stages: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE,
+        }]
     }
 
     pub fn iterations(&mut self) -> u32 {

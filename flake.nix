@@ -2,10 +2,9 @@
   description = "template";
 
   inputs = {
-    fenix = {
-      url = "github:nix-community/fenix/3b89d5df39afc6ef3a8575fa92d8fa10ec68c95f";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    fenix.url = "github:nix-community/fenix/3b89d5df39afc6ef3a8575fa92d8fa10ec68c95f";
+    fenix.inputs.nixpkgs.follows = "nixpkgs";
+
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
@@ -16,22 +15,27 @@
     fenix,
   }:
     flake-parts.lib.mkFlake {inherit inputs;} {
-      systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
+      systems = nixpkgs.lib.systems.flakeExposed;
       perSystem = {
         pkgs,
         system,
         ...
       }: let
-        rustPkg = fenix.packages.${system}.latest.withComponents [
-          "rust-src"
-          "rustc-dev"
-          "llvm-tools-preview"
-          "cargo"
-          "clippy"
-          "rustc"
-          "rustfmt"
-          "rust-analyzer"
-        ];
+        rustPkg = with fenix.packages.${system};
+          combine [
+            targets.wasm32-unknown-unknown.latest.rust-std
+            (latest.withComponents
+              [
+                "rust-src"
+                "rustc-dev"
+                "llvm-tools-preview"
+                "cargo"
+                "clippy"
+                "rustc"
+                "rustfmt"
+                "rust-analyzer"
+              ])
+          ];
         rustPlatform = pkgs.makeRustPlatform {
           cargo = rustPkg;
           rustc = rustPkg;
@@ -57,7 +61,7 @@
             "rustc_codegen_spirv-0.9.0" = "sha256-TTXPKab1/tinSB0raa4pIpgHVixaH5JoG8hymUH7pow=";
           };
           buildNoDefaultFeatures = true;
-          buildFeatures = [ "use-compiled-tools" ];
+          buildFeatures = ["use-compiled-tools"];
           dontCargoSetupPostUnpack = true;
           postUnpack = ''
             mkdir -p .cargo
@@ -88,7 +92,7 @@
         };
         devShells.default = with pkgs;
           mkShell {
-            nativeBuildInputs = [rustPkg];
+            nativeBuildInputs = [rustPkg wasm-pack nodejs];
             LD_LIBRARY_PATH = "${lib.makeLibraryPath buildInputs}";
           };
       };

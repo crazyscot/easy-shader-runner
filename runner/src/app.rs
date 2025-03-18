@@ -6,16 +6,16 @@ use crate::{
     user_event::UserEvent,
     Options,
 };
+#[cfg(not(target_arch = "wasm32"))]
+use egui_winit::winit::platform::wayland::*;
 use egui_winit::winit::{
     application::ApplicationHandler,
     dpi::{PhysicalPosition, PhysicalSize},
     event::{ElementState, KeyEvent, MouseButton, MouseScrollDelta, WindowEvent},
     event_loop::{ActiveEventLoop, EventLoopProxy},
     keyboard::{Key, NamedKey},
-    platform::wayland::*,
     window::{Window, WindowId},
 };
-use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub struct Graphics {
@@ -29,7 +29,8 @@ pub struct Graphics {
 
 pub struct Builder {
     event_proxy: EventLoopProxy<UserEvent>,
-    shader_path: PathBuf,
+    #[cfg(not(target_arch = "wasm32"))]
+    shader_path: std::path::PathBuf,
     options: Options,
 }
 
@@ -42,11 +43,12 @@ pub enum App {
 impl App {
     pub fn new(
         event_proxy: EventLoopProxy<UserEvent>,
-        shader_path: PathBuf,
+        #[cfg(not(target_arch = "wasm32"))] shader_path: std::path::PathBuf,
         options: Options,
     ) -> Self {
         Self::Builder(Builder {
             event_proxy,
+            #[cfg(not(target_arch = "wasm32"))]
             shader_path,
             options,
         })
@@ -130,7 +132,8 @@ impl App {
         gfx.ui.consumes_event(&gfx.window, event)
     }
 
-    pub fn new_module(&mut self, shader_path: &Path) {
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn new_module(&mut self, shader_path: &std::path::Path) {
         let Self::Graphics(gfx) = self else {
             return;
         };
@@ -138,6 +141,7 @@ impl App {
         gfx.window.request_redraw();
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn set_vsync(&mut self, enable: bool) {
         let Self::Graphics(gfx) = self else {
             return;
@@ -149,7 +153,35 @@ impl App {
 impl ApplicationHandler<UserEvent> for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if let Self::Builder(builder) = std::mem::replace(self, Self::Building) {
-            futures::executor::block_on(create_graphics(builder, event_loop));
+            let window_attributes = Window::default_attributes().with_title(crate::TITLE);
+            #[cfg(not(target_arch = "wasm32"))]
+            let window_attributes = window_attributes.with_name(crate::TITLE, "");
+            let window = event_loop.create_window(window_attributes).unwrap();
+
+            cfg_if::cfg_if! {
+                if #[cfg(target_arch = "wasm32")] {
+                    use egui_winit::winit::platform::web::WindowExtWebSys;
+                    // On wasm, append the canvas to the document body
+                    web_sys::window()
+                        .and_then(|win| win.document())
+                        .and_then(|doc| doc.body())
+                        .and_then(|body| {
+                            body.append_child(&web_sys::Element::from(window.canvas().unwrap()))
+                                .ok()
+                        })
+                        .expect("couldn't append canvas to document body");
+                    let size = web_sys::window()
+                        .map(|win| {
+                            let width = win.inner_width().unwrap().unchecked_into_f64() as u32;
+                            let height = win.inner_height().unwrap().unchecked_into_f64() as u32;
+                            PhysicalSize { width, height }
+                        })
+                        .expect("couldn't get window size");
+                    wasm_bindgen_futures::spawn_local(create_graphics(builder, size, window));
+                } else {
+                    futures::executor::block_on(create_graphics(builder, window.inner_size(), window));
+                }
+            }
         }
     }
 
@@ -193,33 +225,30 @@ impl ApplicationHandler<UserEvent> for App {
                 gfx.window.request_redraw();
                 *self = Self::Graphics(gfx);
             }
+            #[cfg(not(target_arch = "wasm32"))]
             UserEvent::NewModule(shader_path) => self.new_module(&shader_path),
+            #[cfg(not(target_arch = "wasm32"))]
             UserEvent::SetVSync(enable) => self.set_vsync(enable),
         }
     }
 }
 
-async fn create_graphics(builder: Builder, event_loop: &ActiveEventLoop) {
-    let window = Arc::new(
-        event_loop
-            .create_window(
-                Window::default_attributes()
-                    .with_title(crate::TITLE)
-                    .with_name(crate::TITLE, "")
-                    .with_inner_size(PhysicalSize::new(1280.0, 720.0)),
-            )
-            .unwrap(),
-    );
-
-    let ctx = GraphicsContext::new(window.clone()).await;
+async fn create_graphics(builder: Builder, initial_size: PhysicalSize<u32>, window: Window) {
+    let window = Arc::new(window);
+    let ctx = GraphicsContext::new(window.clone(), initial_size).await;
 
     let ui = Ui::new(window.clone(), builder.event_proxy.clone());
 
     let ui_state = UiState::new();
 
-    let controller = Controller::new(window.inner_size(), &builder.options);
+    let controller = Controller::new(initial_size, &builder.options);
 
-    let rpass = RenderPass::new(&ctx, &builder.shader_path, &controller.buffers());
+    let rpass = RenderPass::new(
+        &ctx,
+        #[cfg(not(target_arch = "wasm32"))]
+        &builder.shader_path,
+        &controller.buffers(),
+    );
 
     let gfx = Graphics {
         rpass,

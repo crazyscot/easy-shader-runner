@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["runner", "shader/shader"]
+members = ["runner", "runner/builder", "shader/shader"]
 default-members = ["runner"]
 
 [workspace.package]

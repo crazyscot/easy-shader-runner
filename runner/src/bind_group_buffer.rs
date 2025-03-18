@@ -1,3 +1,8 @@
+pub struct BufferDescriptor<'a> {
+    pub buffer_type: BindGroupBufferType<'a>,
+    pub shader_stages: wgpu::ShaderStages,
+}
+
 #[allow(dead_code)]
 pub enum BindGroupBufferType<'a> {
     Uniform(Uniform<'a>),
@@ -11,9 +16,4 @@ pub struct SSBO<'a> {
 
 pub struct Uniform<'a> {
     pub data: &'a [u8],
-}
-
-#[derive(Default)]
-pub struct BufferData<'a> {
-    pub bind_group_buffers: Vec<BindGroupBufferType<'a>>,
 }

@@ -9,21 +9,31 @@ pub struct GraphicsContext {
 }
 
 impl GraphicsContext {
-    pub async fn new(window: Arc<Window>) -> GraphicsContext {
+    pub async fn new(window: Arc<Window>, initial_size: PhysicalSize<u32>) -> GraphicsContext {
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::from_env_or_default());
-        let inner_size = window.inner_size();
         let initial_surface = instance
             .create_surface(window)
             .expect("Failed to create surface from window");
-        let adapter =
-            wgpu::util::initialize_adapter_from_env_or_default(&instance, Some(&initial_surface))
-                .await
-                .expect("Failed to find an appropriate adapter");
 
-        let features = wgpu::Features::PUSH_CONSTANTS | wgpu::Features::SPIRV_SHADER_PASSTHROUGH;
-        let limits = wgpu::Limits {
-            max_push_constant_size: 128,
-            ..Default::default()
+        let adapter = instance
+            .request_adapter(&wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::HighPerformance,
+                compatible_surface: Some(&initial_surface),
+                force_fallback_adapter: false,
+            })
+            .await
+            .unwrap();
+
+        let (features, limits) = if cfg!(target_arch = "wasm32") {
+            Default::default()
+        } else {
+            (
+                wgpu::Features::PUSH_CONSTANTS,
+                wgpu::Limits {
+                    max_push_constant_size: 128,
+                    ..Default::default()
+                },
+            )
         };
 
         let (device, queue) = adapter
@@ -59,7 +69,7 @@ impl GraphicsContext {
         }
 
         let (surface, config) =
-            auto_configure_surface(&adapter, &device, initial_surface, inner_size);
+            auto_configure_surface(&adapter, &device, initial_surface, initial_size);
 
         GraphicsContext {
             surface,
@@ -69,6 +79,7 @@ impl GraphicsContext {
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn set_vsync(&mut self, enable: bool) {
         self.config.present_mode = if enable {
             wgpu::PresentMode::AutoVsync
