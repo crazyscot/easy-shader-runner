@@ -98,9 +98,13 @@ impl App {
         let Self::Graphics(gfx) = self else {
             return;
         };
+        let start = web_time::Instant::now();
         for _ in 0..gfx.controller.iterations() {
             gfx.controller.pre_update();
             gfx.rpass.compute(&gfx.ctx, &gfx.controller);
+            if start.elapsed().as_secs_f32() > 1.0 / gfx.ui_state.fps as f32 {
+                break;
+            }
         }
     }
 
