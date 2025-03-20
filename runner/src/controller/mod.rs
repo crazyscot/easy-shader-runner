@@ -9,7 +9,7 @@ use egui_winit::winit::{
 };
 use glam::*;
 use shared::push_constants::shader::*;
-use shared::{UI_MENU_HEIGHT, UI_SIDEBAR_WIDTH};
+use shared::*;
 use web_time::Instant;
 
 mod ui;
@@ -27,7 +27,8 @@ pub struct Controller {
     last_frame: Instant,
     zoom: f32,
     debug: bool,
-    buffer: Vec<f32>,
+    cell_grid: Vec<CellState>,
+    transition: bool,
 }
 
 impl Controller {
@@ -37,6 +38,17 @@ impl Controller {
 
         let debug = options.debug;
         let speed = normalize_speed_down(!debug as u32 as f32);
+
+        let mut cell_grid = vec![CellState::Off; (DIM.x * DIM.y) as usize];
+        {
+            let x = (DIM.x / 2) as usize;
+            let y = (DIM.y / 2) as usize;
+            cell_grid[y * DIM.x as usize + x] = CellState::On;
+            cell_grid[y * DIM.x as usize + x - 1] = CellState::On;
+            cell_grid[(y - 1) * DIM.x as usize + x] = CellState::On;
+            cell_grid[(y + 1) * DIM.x as usize + x] = CellState::On;
+            cell_grid[(y + 1) * DIM.x as usize + x + 1] = CellState::On;
+        }
 
         Self {
             size,
@@ -51,7 +63,8 @@ impl Controller {
             last_frame: now,
             zoom: 1.0,
             debug,
-            buffer: vec![0.0],
+            cell_grid,
+            transition: false,
         }
     }
 
@@ -91,7 +104,11 @@ impl Controller {
         match key.logical_key {
             Key::Character(c) => match c.chars().next().unwrap() {
                 'z' => {}
-                'x' => {}
+                'x' => {
+                    if key.state.is_pressed() {
+                        self.distance += 1.0;
+                    }
+                }
                 _ => {}
             },
             Key::Named(NamedKey::ArrowLeft) => {}
@@ -117,7 +134,9 @@ impl Controller {
             size: self.size.into(),
             time: self.start.elapsed().as_secs_f32(),
             zoom: self.zoom,
+            transition: self.transition.into(),
         };
+        self.transition = !self.transition;
     }
 
     pub fn fragment_constants(&self) -> &[u8] {
@@ -135,7 +154,7 @@ impl Controller {
     pub fn buffers(&self) -> Vec<BufferDescriptor> {
         vec![BufferDescriptor {
             buffer_type: BindGroupBufferType::SSBO(SSBO {
-                data: bytemuck::cast_slice(&self.buffer[..]),
+                data: bytemuck::cast_slice(&self.cell_grid),
                 read_only: false,
             }),
             shader_stages: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE,
@@ -144,7 +163,7 @@ impl Controller {
 
     pub fn iterations(&mut self) -> u32 {
         let speed = normalize_speed_up(self.speed);
-        let t = self.last_frame.elapsed().as_secs_f32() * 100.0;
+        let t = self.last_frame.elapsed().as_secs_f32() * 30.0;
         self.last_frame = Instant::now();
         self.distance += speed * t;
         if self.distance >= 1.0 {

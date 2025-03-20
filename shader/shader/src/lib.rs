@@ -14,14 +14,23 @@ pub fn main_fs(
     #[cfg(feature = "emulate_constants")]
     #[spirv(storage_buffer, descriptor_set = 1, binding = 0)]
     constants: &FragmentConstants,
-    #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] _buffer: &mut [f32],
+    #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] cell_grid: &mut [CellState],
     output: &mut Vec4,
 ) {
-    let coord = vec2(frag_coord.x, frag_coord.y - UI_MENU_HEIGHT as f32);
-    *output = (coord / constants.size.as_vec2() / constants.zoom)
-        .extend(0.0)
-        .powf(2.2)
-        .extend(1.0);
+    let coord = ((vec2(frag_coord.x, frag_coord.y - UI_MENU_HEIGHT as f32) - 0.5)
+        / constants.size.as_vec2()
+        * DIM.as_vec2()
+        / constants.zoom)
+        .as_uvec2();
+
+    let val = cell_grid[(coord.y * DIM.x + coord.x) as usize];
+    let col = match val {
+        CellState::Off => Vec3::ZERO,
+        CellState::On => Vec3::X,
+        CellState::Dying => vec3(0.3, 0.05, 0.0),
+        CellState::Spawning => vec3(0.35, 0.0, 0.0),
+    };
+    *output = col.extend(1.0);
 }
 
 #[spirv(vertex)]
@@ -36,14 +45,47 @@ pub fn main_vs(
 
 #[spirv(compute(threads(16, 16)))]
 pub fn main_cs(
-    #[spirv(global_invocation_id)] _gid: UVec3,
+    #[spirv(global_invocation_id)] gid: UVec3,
     #[cfg(not(feature = "emulate_constants"))]
     #[spirv(push_constant)]
-    _constants: &ComputeConstants,
+    constants: &ComputeConstants,
     #[cfg(feature = "emulate_constants")]
     #[spirv(storage_buffer, descriptor_set = 2, binding = 0)]
-    _constants: &ComputeConstants,
-    #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] buffer: &mut [f32],
+    constants: &ComputeConstants,
+    #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] cell_grid: &mut [CellState],
 ) {
-    buffer[0] = 1.0;
+    let index = (gid.y * DIM.x + gid.x) as usize;
+    let val = cell_grid[index];
+
+    if constants.transition.into() {
+        cell_grid[index] = match val {
+            CellState::Dying => CellState::Off,
+            CellState::Spawning => CellState::On,
+            CellState::Off => CellState::Off,
+            CellState::On => CellState::On,
+        };
+        return;
+    }
+
+    let mut count = 0;
+    for i in -1..=1 {
+        for j in -1..=1 {
+            if i == 0 && j == 0 {
+                continue;
+            }
+            let y = (gid.y as i32 + i).rem_euclid(DIM.y as i32);
+            let x = (gid.x as i32 + j).rem_euclid(DIM.x as i32);
+
+            let val = cell_grid[(y * DIM.x as i32 + x) as usize];
+            if matches!(val, CellState::On | CellState::Dying) {
+                count += 1
+            };
+        }
+    }
+
+    if matches!(val, CellState::On) && (count < 2 || count > 3) {
+        cell_grid[index] = CellState::Dying;
+    } else if matches!(val, CellState::Off) && count == 3 {
+        cell_grid[index] = CellState::Spawning;
+    }
 }

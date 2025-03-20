@@ -19,4 +19,5 @@ pub struct ComputeConstants {
     pub size: Size,
     pub time: f32,
     pub zoom: f32,
+    pub transition: Bool,
 }
