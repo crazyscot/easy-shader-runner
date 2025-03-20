@@ -17,11 +17,17 @@ pub fn main_fs(
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] cell_grid: &mut [CellState],
     output: &mut Vec4,
 ) {
-    let coord = ((vec2(frag_coord.x, frag_coord.y - UI_MENU_HEIGHT as f32) - 0.5)
-        / constants.size.as_vec2()
+    let zoom = constants.zoom;
+    let size = constants.size.as_vec2();
+    let cursor = ((constants.cursor - size / 2.0 / zoom) / size).clamp(
+        Vec2::splat(-1.0 / zoom + 1.0 / zoom),
+        Vec2::splat(1.0 - 1.0 / zoom),
+    );
+    let coord = ((vec2(frag_coord.x, frag_coord.y - UI_MENU_HEIGHT as f32) - 0.5) / size
         * DIM.as_vec2()
-        / constants.zoom)
-        .as_uvec2();
+        / zoom
+        + cursor * DIM.as_vec2())
+    .as_uvec2();
 
     let val = cell_grid[(coord.y * DIM.x + coord.x) as usize];
     let col = match val {
