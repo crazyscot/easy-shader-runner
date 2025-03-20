@@ -40,7 +40,7 @@ impl RenderPass {
     ) -> Self {
         let bind_group_layouts = create_bind_group_layouts(ctx, buffer_data);
         let pipeline_layouts = create_pipeline_layouts(ctx, &bind_group_layouts);
-        let pipelines = create_pipeline(
+        let pipelines = create_pipelines(
             &ctx.device,
             &pipeline_layouts,
             ctx.config.format,
@@ -60,26 +60,17 @@ impl RenderPass {
         }
     }
 
-    pub fn compute(
-        &mut self,
-        ctx: &GraphicsContext,
-        inner_size: &PhysicalSize<u32>,
-        controller: &Controller,
-    ) {
-        let m = inner_size.width / 2;
-        let n = inner_size.height / 2;
-        let w = glam::UVec3::new(16, 16, 1);
-        let x = ((m as f32) / (w.x as f32)).ceil() as u32;
-        let y = ((n as f32) / (w.y as f32)).ceil() as u32;
-        self.call(ctx, (x, y, 1), controller);
-    }
-
-    pub fn call(
-        &mut self,
-        ctx: &GraphicsContext,
-        workspace: (u32, u32, u32),
-        controller: &Controller,
-    ) {
+    pub fn compute(&mut self, ctx: &GraphicsContext, controller: &Controller) {
+        let workspace = {
+            use glam::*;
+            const COMPUTE_THREADS: UVec3 = uvec3(16, 16, 1);
+            let dim = controller.compute_dimensions();
+            uvec3(
+                ((dim.x as f32) / (COMPUTE_THREADS.x as f32)).ceil() as u32,
+                ((dim.y as f32) / (COMPUTE_THREADS.y as f32)).ceil() as u32,
+                1,
+            )
+        };
         let mut encoder = ctx
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
@@ -101,7 +92,7 @@ impl RenderPass {
             for (i, bind_group_data) in self.bind_group_data.iter().enumerate() {
                 cpass.set_bind_group(i as u32, &bind_group_data.bind_group, &[]);
             }
-            cpass.dispatch_workgroups(workspace.0, workspace.1, workspace.2);
+            cpass.dispatch_workgroups(workspace.x, workspace.y, workspace.z);
         }
         ctx.queue.submit(Some(encoder.finish()));
     }
@@ -264,7 +255,7 @@ impl RenderPass {
 
     #[cfg(not(target_arch = "wasm32"))]
     pub fn new_module(&mut self, ctx: &GraphicsContext, shader_path: &std::path::Path) {
-        self.pipelines = create_pipeline(
+        self.pipelines = create_pipelines(
             &ctx.device,
             &self.pipeline_layouts,
             ctx.config.format,
@@ -359,7 +350,7 @@ fn maybe_create_bind_groups(
     bind_group_data.collect()
 }
 
-fn create_pipeline(
+fn create_pipelines(
     device: &wgpu::Device,
     pipeline_layouts: &PipelineLayouts,
     surface_format: wgpu::TextureFormat,

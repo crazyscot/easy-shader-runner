@@ -100,8 +100,7 @@ impl App {
         };
         for _ in 0..gfx.controller.iterations() {
             gfx.controller.pre_update();
-            gfx.rpass
-                .compute(&gfx.ctx, &gfx.window.inner_size(), &mut gfx.controller);
+            gfx.rpass.compute(&gfx.ctx, &gfx.controller);
         }
     }
 

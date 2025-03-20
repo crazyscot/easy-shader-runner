@@ -128,6 +128,10 @@ impl Controller {
         bytemuck::bytes_of(&self.compute_constants)
     }
 
+    pub fn compute_dimensions(&self) -> UVec2 {
+        shared::DIM
+    }
+
     pub fn buffers(&self) -> Vec<BufferDescriptor> {
         vec![BufferDescriptor {
             buffer_type: BindGroupBufferType::SSBO(SSBO {
