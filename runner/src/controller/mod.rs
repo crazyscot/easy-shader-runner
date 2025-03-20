@@ -29,6 +29,7 @@ pub struct Controller {
     debug: bool,
     cell_grid: Vec<CellState>,
     transition: bool,
+    paused: bool,
 }
 
 impl Controller {
@@ -37,7 +38,6 @@ impl Controller {
         let size = uvec2(size.width - UI_SIDEBAR_WIDTH, size.height - UI_MENU_HEIGHT);
 
         let debug = options.debug;
-        let speed = normalize_speed_down(!debug as u32 as f32);
 
         let mut cell_grid = vec![CellState::Off; (DIM.x * DIM.y) as usize];
         {
@@ -58,13 +58,14 @@ impl Controller {
             cursor: Vec2::ZERO,
             prev_cursor: Vec2::ZERO,
             mouse_button_pressed: 0,
-            speed,
+            speed: 1.0,
             distance: 0.0,
             last_frame: now,
             zoom: 1.0,
             debug,
             cell_grid,
             transition: false,
+            paused: options.debug,
         }
     }
 
@@ -111,7 +112,11 @@ impl Controller {
                 }
                 _ => {}
             },
-            Key::Named(NamedKey::ArrowLeft) => {}
+            Key::Named(NamedKey::Space) => {
+                if key.state.is_pressed() {
+                    self.paused = !self.paused;
+                }
+            }
             _ => {}
         }
     }
@@ -162,7 +167,7 @@ impl Controller {
     }
 
     pub fn iterations(&mut self) -> u32 {
-        let speed = normalize_speed_up(self.speed);
+        let speed = if self.paused { 0.0 } else { self.speed };
         let t = self.last_frame.elapsed().as_secs_f32() * 30.0;
         self.last_frame = Instant::now();
         self.distance += speed * t;
@@ -174,12 +179,4 @@ impl Controller {
             0
         }
     }
-}
-
-fn normalize_speed_down(x: f32) -> f32 {
-    (x / 25.0).sqrt()
-}
-
-fn normalize_speed_up(x: f32) -> f32 {
-    x * x * 25.0
 }

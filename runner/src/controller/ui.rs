@@ -10,10 +10,11 @@ impl super::Controller {
     ) {
         ui.add(egui::Label::new(" Simulation Speed").selectable(false));
         ui.add(
-            egui::Slider::new(&mut self.speed, 0.0..=1.99)
-                .custom_formatter(|x, _| format!("{:.2}", super::normalize_speed_up(x as f32)))
-                .custom_parser(|x| x.parse().map(|x: f32| super::normalize_speed_down(x) as f64).ok()),
+            egui::Slider::new(&mut self.speed, 0.01..=99.0)
+                .logarithmic(true)
+                .max_decimals(2),
         );
+        ui.checkbox(&mut self.paused, "Paused");
         ui.add(egui::Label::new("           Zoom").selectable(false));
         ui.add(
             egui::Slider::new(&mut self.zoom, 1.0..=100.0)
