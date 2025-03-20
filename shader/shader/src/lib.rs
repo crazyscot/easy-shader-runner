@@ -19,17 +19,20 @@ pub fn main_fs(
 ) {
     let zoom = constants.zoom;
     let size = constants.size.as_vec2();
+    let frag_coord = vec2(frag_coord.x, frag_coord.y - UI_MENU_HEIGHT as f32);
     let cursor = ((constants.cursor - size / 2.0 / zoom) / size).clamp(
         Vec2::splat(-1.0 / zoom + 1.0 / zoom),
         Vec2::splat(1.0 - 1.0 / zoom),
     );
-    let coord = ((vec2(frag_coord.x, frag_coord.y - UI_MENU_HEIGHT as f32) - 0.5) / size
-        * DIM.as_vec2()
-        / zoom
-        + cursor * DIM.as_vec2())
-    .as_uvec2();
+    let i = ((frag_coord - 0.5) / size * DIM.as_vec2() / zoom + cursor * DIM.as_vec2()).as_uvec2();
 
-    let val = cell_grid[(coord.y * DIM.x + coord.x) as usize];
+    if constants.mouse_button_pressed & 1 == 1 {
+        if constants.cursor.distance_squared(frag_coord) < 0.5 {
+            cell_grid[(i.y * DIM.x + i.x) as usize] = CellState::On;
+        }
+    }
+
+    let val = cell_grid[(i.y * DIM.x + i.x) as usize];
     let col = match val {
         CellState::Off => Vec3::ZERO,
         CellState::On => Vec3::X,
