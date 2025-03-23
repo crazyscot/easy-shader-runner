@@ -23,11 +23,11 @@ impl super::Controller {
                 ui.end_row();
 
                 ui.label("Zoom");
-                ui.label(format!("{:.1}x", self.zoom));
+                ui.label(format!("{:.1}x", self.camera.zoom));
                 ui.end_row();
 
                 ui.label("Translate");
-                ui.label(format!("{:.2}", self.translate));
+                ui.label(format!("{:.2}", self.camera.translate));
                 ui.end_row();
             });
         }

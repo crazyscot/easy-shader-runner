@@ -16,6 +16,20 @@ use web_time::Instant;
 mod simulation_runner;
 mod ui;
 
+struct Camera {
+    zoom: f32,
+    translate: Vec2,
+}
+
+impl Default for Camera {
+    fn default() -> Self {
+        Self {
+            zoom: 1.0,
+            translate: Default::default(),
+        }
+    }
+}
+
 pub struct Controller {
     size: UVec2,
     start: Instant,
@@ -24,11 +38,10 @@ pub struct Controller {
     cursor: Vec2,
     prev_cursor: Vec2,
     mouse_button_pressed: u32,
-    zoom: f32,
+    camera: Camera,
     debug: bool,
     cell_grid: grid::Grid<CellState>,
     transition: bool,
-    translate: Vec2,
     simulation_runner: SimulationRunner,
 }
 
@@ -65,11 +78,10 @@ impl Controller {
             cursor: Vec2::ZERO,
             prev_cursor: Vec2::ZERO,
             mouse_button_pressed: 0,
-            zoom: 1.0,
+            camera: Default::default(),
             debug,
             cell_grid,
             transition: false,
-            translate: Vec2::ZERO,
             simulation_runner: SimulationRunner::new(now, options.debug),
         }
     }
@@ -87,14 +99,14 @@ impl Controller {
             MouseScrollDelta::LineDelta(_, val) => val * 0.1,
             MouseScrollDelta::PixelDelta(p) => (p.y * 0.005) as f32,
         };
-        let prev_zoom = self.zoom;
-        self.zoom = (self.zoom + self.zoom * val).clamp(1.0, 100.0);
-        let size = self.size.as_vec2();
-        let pixel_dif = size / prev_zoom - size / self.zoom;
-        self.translate += pixel_dif * self.cursor / size / size;
-        self.translate = self
+        let prev_zoom = self.camera.zoom;
+        self.camera.zoom = (prev_zoom * (1.0 + val)).clamp(1.0, 100.0);
+        let dif = 1.0 / prev_zoom - 1.0 / self.camera.zoom;
+        self.camera.translate += dif * self.cursor / self.size.as_vec2();
+        self.camera.translate = self
+            .camera
             .translate
-            .clamp(Vec2::ZERO, Vec2::ONE * (1.0 - 1.0 / self.zoom));
+            .clamp(Vec2::ZERO, Vec2::splat(1.0 - 1.0 / self.camera.zoom));
     }
 
     pub fn mouse_input(&mut self, state: ElementState, button: MouseButton) {
@@ -137,9 +149,9 @@ impl Controller {
             mouse_button_pressed: self.mouse_button_pressed,
             cursor: self.cursor,
             prev_cursor: self.prev_cursor,
-            zoom: self.zoom,
+            zoom: self.camera.zoom,
             debug: self.debug.into(),
-            translate: self.translate,
+            translate: self.camera.translate,
         };
         self.prev_cursor = self.cursor;
     }
@@ -148,7 +160,7 @@ impl Controller {
         self.compute_constants = ComputeConstants {
             size: self.size.into(),
             time: self.start.elapsed().as_secs_f32(),
-            zoom: self.zoom,
+            zoom: self.camera.zoom,
             transition: self.transition.into(),
         };
         self.transition = !self.transition;
