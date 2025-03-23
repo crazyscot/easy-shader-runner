@@ -30,6 +30,7 @@ pub struct Controller {
     cell_grid: Vec<CellState>,
     transition: bool,
     paused: bool,
+    translate: Vec2,
 }
 
 impl Controller {
@@ -66,6 +67,7 @@ impl Controller {
             cell_grid,
             transition: false,
             paused: options.debug,
+            translate: Vec2::ZERO,
         }
     }
 
@@ -82,7 +84,14 @@ impl Controller {
             MouseScrollDelta::LineDelta(_, val) => val * 0.1,
             MouseScrollDelta::PixelDelta(p) => (p.y * 0.005) as f32,
         };
+        let prev_zoom = self.zoom;
         self.zoom = (self.zoom + self.zoom * val).clamp(1.0, 100.0);
+        let size = self.size.as_vec2();
+        let pixel_dif = size / prev_zoom - size / self.zoom;
+        self.translate += pixel_dif * self.cursor / size / size;
+        self.translate = self
+            .translate
+            .clamp(Vec2::ZERO, Vec2::ONE * (1.0 - 1.0 / self.zoom));
     }
 
     pub fn mouse_input(&mut self, state: ElementState, button: MouseButton) {
@@ -130,6 +139,7 @@ impl Controller {
             prev_cursor: self.prev_cursor,
             zoom: self.zoom,
             debug: self.debug.into(),
+            translate: self.translate,
         };
         self.prev_cursor = self.cursor;
     }

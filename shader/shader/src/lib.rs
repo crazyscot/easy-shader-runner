@@ -17,17 +17,13 @@ pub fn main_fs(
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] cell_grid: &mut [CellState],
     output: &mut Vec4,
 ) {
-    let zoom = constants.zoom;
-    let size = constants.size.as_vec2();
-    let frag_coord = vec2(frag_coord.x, frag_coord.y - UI_MENU_HEIGHT as f32);
-    let cursor = ((constants.cursor - size / 2.0 / zoom) / size).clamp(
-        Vec2::splat(-1.0 / zoom + 1.0 / zoom),
-        Vec2::splat(1.0 - 1.0 / zoom),
-    );
-    let i = ((frag_coord - 0.5) / size * DIM.as_vec2() / zoom + cursor * DIM.as_vec2()).as_uvec2();
+    let coord = vec2(frag_coord.x, frag_coord.y - UI_MENU_HEIGHT as f32) - 0.5;
+    let i = ((coord / constants.size.as_vec2() / constants.zoom + constants.translate)
+        * DIM.as_vec2())
+    .as_uvec2();
 
     if constants.mouse_button_pressed & 1 == 1 {
-        if constants.cursor.distance_squared(frag_coord) < 0.5 {
+        if constants.cursor.distance_squared(coord) < 0.5 {
             cell_grid[(i.y * DIM.x + i.x) as usize] = CellState::On;
         }
     }

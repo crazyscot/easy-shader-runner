@@ -11,6 +11,7 @@ pub struct FragmentConstants {
     pub mouse_button_pressed: u32,
     pub zoom: f32,
     pub debug: Bool,
+    pub translate: Vec2,
 }
 
 #[derive(Copy, Clone, Debug, Default, NoUninit)]
