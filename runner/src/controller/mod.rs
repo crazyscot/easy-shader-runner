@@ -27,7 +27,7 @@ pub struct Controller {
     last_frame: Instant,
     zoom: f32,
     debug: bool,
-    cell_grid: Vec<CellState>,
+    cell_grid: grid::Grid<CellState>,
     transition: bool,
     paused: bool,
     translate: Vec2,
@@ -40,15 +40,22 @@ impl Controller {
 
         let debug = options.debug;
 
-        let mut cell_grid = vec![CellState::Off; (DIM.x * DIM.y) as usize];
+        let mut cell_grid = grid::Grid::new(DIM);
+        let seed = [
+            // Initial configuration
+            [0, 1, 0],
+            [1, 1, 0],
+            [0, 1, 1],
+        ];
         {
-            let x = (DIM.x / 2) as usize;
-            let y = (DIM.y / 2) as usize;
-            cell_grid[y * DIM.x as usize + x] = CellState::On;
-            cell_grid[y * DIM.x as usize + x - 1] = CellState::On;
-            cell_grid[(y - 1) * DIM.x as usize + x] = CellState::On;
-            cell_grid[(y + 1) * DIM.x as usize + x] = CellState::On;
-            cell_grid[(y + 1) * DIM.x as usize + x + 1] = CellState::On;
+            let p = DIM / 2;
+            for (i, row) in seed.into_iter().enumerate() {
+                for (j, val) in row.into_iter().enumerate() {
+                    if val != 0 {
+                        cell_grid.set(p + uvec2(i as u32, j as u32), CellState::On);
+                    }
+                }
+            }
         }
 
         Self {
@@ -169,7 +176,7 @@ impl Controller {
     pub fn buffers(&self) -> Vec<BufferDescriptor> {
         vec![BufferDescriptor {
             buffer_type: BindGroupBufferType::SSBO(SSBO {
-                data: bytemuck::cast_slice(&self.cell_grid),
+                data: bytemuck::cast_slice(&self.cell_grid.buffer),
                 read_only: false,
             }),
             shader_stages: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE,

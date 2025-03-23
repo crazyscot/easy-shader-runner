@@ -17,6 +17,7 @@ pub fn main_fs(
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] cell_grid: &mut [CellState],
     output: &mut Vec4,
 ) {
+    let mut cell_grid = grid::GridRefMut::new(DIM, cell_grid);
     let coord = vec2(frag_coord.x, frag_coord.y - UI_MENU_HEIGHT as f32) - 0.5;
     let i = ((coord / constants.size.as_vec2() / constants.zoom + constants.translate)
         * DIM.as_vec2())
@@ -24,12 +25,11 @@ pub fn main_fs(
 
     if constants.mouse_button_pressed & 1 == 1 {
         if constants.cursor.distance_squared(coord) < 0.5 {
-            cell_grid[(i.y * DIM.x + i.x) as usize] = CellState::On;
+            cell_grid.set(i, CellState::On);
         }
     }
 
-    let val = cell_grid[(i.y * DIM.x + i.x) as usize];
-    let col = match val {
+    let col = match cell_grid.get(i) {
         CellState::Off => Vec3::ZERO,
         CellState::On => Vec3::X,
         CellState::Dying => vec3(0.3, 0.05, 0.0),
@@ -59,29 +59,35 @@ pub fn main_cs(
     constants: &ComputeConstants,
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] cell_grid: &mut [CellState],
 ) {
-    let index = (gid.y * DIM.x + gid.x) as usize;
-    let val = cell_grid[index];
+    let mut cell_grid = grid::GridRefMut::new(DIM, cell_grid);
+    let index = gid.xy();
+    let val = cell_grid.get(index);
 
     if constants.transition.into() {
-        cell_grid[index] = match val {
-            CellState::Dying => CellState::Off,
-            CellState::Spawning => CellState::On,
-            CellState::Off => CellState::Off,
-            CellState::On => CellState::On,
-        };
+        cell_grid.set(
+            index,
+            match val {
+                CellState::Dying => CellState::Off,
+                CellState::Spawning => CellState::On,
+                CellState::Off => CellState::Off,
+                CellState::On => CellState::On,
+            },
+        );
         return;
     }
 
     let mut count = 0;
     for i in -1..=1 {
         for j in -1..=1 {
-            if i == 0 && j == 0 {
+            let ij = ivec2(i, j);
+            if ij == IVec2::ZERO {
                 continue;
             }
-            let y = (gid.y as i32 + i).rem_euclid(DIM.y as i32);
-            let x = (gid.x as i32 + j).rem_euclid(DIM.x as i32);
+            let index = (index.as_ivec2() + ij)
+                .rem_euclid(DIM.as_ivec2())
+                .as_uvec2();
 
-            let val = cell_grid[(y * DIM.x as i32 + x) as usize];
+            let val = cell_grid.get(index);
             if matches!(val, CellState::On | CellState::Dying) {
                 count += 1
             };
@@ -89,8 +95,8 @@ pub fn main_cs(
     }
 
     if matches!(val, CellState::On) && (count < 2 || count > 3) {
-        cell_grid[index] = CellState::Dying;
+        cell_grid.set(index, CellState::Dying);
     } else if matches!(val, CellState::Off) && count == 3 {
-        cell_grid[index] = CellState::Spawning;
+        cell_grid.set(index, CellState::Spawning);
     }
 }
