@@ -10,8 +10,10 @@ use egui_winit::winit::{
 use glam::*;
 use shared::push_constants::shader::*;
 use shared::*;
+use simulation_runner::SimulationRunner;
 use web_time::Instant;
 
+mod simulation_runner;
 mod ui;
 
 pub struct Controller {
@@ -22,15 +24,12 @@ pub struct Controller {
     cursor: Vec2,
     prev_cursor: Vec2,
     mouse_button_pressed: u32,
-    speed: f32,
-    distance: f32,
-    last_frame: Instant,
     zoom: f32,
     debug: bool,
     cell_grid: grid::Grid<CellState>,
     transition: bool,
-    paused: bool,
     translate: Vec2,
+    simulation_runner: SimulationRunner,
 }
 
 impl Controller {
@@ -66,15 +65,12 @@ impl Controller {
             cursor: Vec2::ZERO,
             prev_cursor: Vec2::ZERO,
             mouse_button_pressed: 0,
-            speed: 1.0,
-            distance: 0.0,
-            last_frame: now,
             zoom: 1.0,
             debug,
             cell_grid,
             transition: false,
-            paused: options.debug,
             translate: Vec2::ZERO,
+            simulation_runner: SimulationRunner::new(now, options.debug),
         }
     }
 
@@ -118,20 +114,17 @@ impl Controller {
     }
 
     pub fn keyboard_input(&mut self, key: KeyEvent) {
+        if !key.state.is_pressed() {
+            return;
+        }
         match key.logical_key {
             Key::Character(c) => match c.chars().next().unwrap() {
                 'z' => {}
-                'x' => {
-                    if key.state.is_pressed() {
-                        self.distance += 1.0;
-                    }
-                }
+                'x' => self.simulation_runner.add_iteration(),
                 _ => {}
             },
             Key::Named(NamedKey::Space) => {
-                if key.state.is_pressed() {
-                    self.paused = !self.paused;
-                }
+                self.simulation_runner.paused = !self.simulation_runner.paused;
             }
             _ => {}
         }
@@ -184,16 +177,6 @@ impl Controller {
     }
 
     pub fn iterations(&mut self) -> u32 {
-        let speed = if self.paused { 0.0 } else { self.speed };
-        let t = self.last_frame.elapsed().as_secs_f32() * 30.0;
-        self.last_frame = Instant::now();
-        self.distance += speed * t;
-        if self.distance >= 1.0 {
-            let iterations = self.distance as u32;
-            self.distance = self.distance.fract();
-            iterations
-        } else {
-            0
-        }
+        self.simulation_runner.iterations()
     }
 }
