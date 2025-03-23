@@ -15,18 +15,21 @@ impl super::Controller {
                 .max_decimals(2),
         );
         ui.checkbox(&mut self.simulation_runner.paused, "Paused");
-        ui.add(egui::Label::new("           Zoom").selectable(false));
-        ui.add(
-            egui::Slider::new(&mut self.zoom, 1.0..=100.0)
-                .logarithmic(true)
-                .max_decimals(2),
-        );
         ui.checkbox(&mut self.debug, "Debug");
         if self.debug {
-            ui.label(format!(
-                "Elapsed: {:.1}s",
-                self.start.elapsed().as_secs_f64()
-            ));
+            egui::Grid::new("debug_grid").show(ui, |ui| {
+                ui.label("Elapsed");
+                ui.label(format!("{:.1}s", self.start.elapsed().as_secs_f64()));
+                ui.end_row();
+
+                ui.label("Zoom");
+                ui.label(format!("{:.1}x", self.zoom));
+                ui.end_row();
+
+                ui.label("Translate");
+                ui.label(format!("{:.2}", self.translate));
+                ui.end_row();
+            });
         }
     }
 }
