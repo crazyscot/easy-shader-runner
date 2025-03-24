@@ -18,8 +18,9 @@ pub fn main_fs(
     output: &mut Vec4,
 ) {
     let mut cell_grid = grid::GridRefMut::new(DIM, cell_grid);
-    let coord = vec2(frag_coord.x, frag_coord.y - UI_MENU_HEIGHT as f32) - 0.5;
-    let i = ((coord / constants.size.as_vec2() / constants.zoom + constants.translate)
+    let coord = frag_coord.xy() + constants.translate;
+    let i = ((coord / constants.size.as_vec2() / constants.camera_zoom
+        + constants.camera_translate)
         * DIM.as_vec2())
     .as_uvec2();
 

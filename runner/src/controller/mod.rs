@@ -43,12 +43,16 @@ pub struct Controller {
     cell_grid: grid::Grid<CellState>,
     transition: bool,
     simulation_runner: SimulationRunner,
+    pub scale_factor: f64,
 }
 
 impl Controller {
-    pub fn new(size: PhysicalSize<u32>, options: &Options) -> Self {
+    pub fn new(size: PhysicalSize<u32>, scale_factor: f64, options: &Options) -> Self {
         let now = Instant::now();
-        let size = uvec2(size.width - UI_SIDEBAR_WIDTH, size.height - UI_MENU_HEIGHT);
+        let size = uvec2(
+            (size.width as f64 - UI_SIDEBAR_WIDTH as f64 * scale_factor) as u32,
+            (size.height as f64 - UI_MENU_HEIGHT as f64 * scale_factor) as u32,
+        );
 
         let debug = options.debug;
 
@@ -83,15 +87,27 @@ impl Controller {
             cell_grid,
             transition: false,
             simulation_runner: SimulationRunner::new(now, options.debug),
+            scale_factor,
         }
     }
 
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
-        self.size = uvec2(size.width - UI_SIDEBAR_WIDTH, size.height - UI_MENU_HEIGHT);
+        self.size = uvec2(
+            size.width - (UI_SIDEBAR_WIDTH as f64 * self.scale_factor) as u32,
+            size.height - (UI_MENU_HEIGHT as f64 * self.scale_factor) as u32,
+        );
+    }
+
+    pub fn scale_factor_changed(&mut self, scale_factor: f64, size: PhysicalSize<u32>) {
+        self.scale_factor = scale_factor;
+        self.resize(size);
     }
 
     pub fn mouse_move(&mut self, position: PhysicalPosition<f64>) {
-        self.cursor = vec2(position.x as f32, position.y as f32 - UI_MENU_HEIGHT as f32);
+        self.cursor = vec2(
+            position.x as f32,
+            (position.y as f64 - UI_MENU_HEIGHT as f64 * self.scale_factor) as f32,
+        );
     }
 
     pub fn mouse_scroll(&mut self, delta: MouseScrollDelta) {
@@ -145,13 +161,14 @@ impl Controller {
     pub fn pre_render(&mut self) {
         self.fragment_constants = FragmentConstants {
             size: self.size.into(),
+            translate: vec2(0.0, (-(UI_MENU_HEIGHT as f64) * self.scale_factor) as f32) - 0.5,
             time: self.start.elapsed().as_secs_f32(),
             mouse_button_pressed: self.mouse_button_pressed,
             cursor: self.cursor,
             prev_cursor: self.prev_cursor,
-            zoom: self.camera.zoom,
+            camera_translate: self.camera.translate,
+            camera_zoom: self.camera.zoom,
             debug: self.debug.into(),
-            translate: self.camera.translate,
         };
         self.prev_cursor = self.cursor;
     }

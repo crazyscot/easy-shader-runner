@@ -157,14 +157,17 @@ impl RenderPass {
                 })],
                 depth_stencil_attachment: None,
             });
-            rpass.set_viewport(
-                0.0,
-                shared::UI_MENU_HEIGHT as f32,
-                (size.width - shared::UI_SIDEBAR_WIDTH) as f32,
-                (size.height - shared::UI_MENU_HEIGHT) as f32,
-                0.0,
-                1.0,
-            );
+            {
+                let scale_factor = controller.scale_factor;
+                rpass.set_viewport(
+                    0.0,
+                    (shared::UI_MENU_HEIGHT as f64 * scale_factor) as f32,
+                    (size.width as f64 - shared::UI_SIDEBAR_WIDTH as f64 * scale_factor) as f32,
+                    (size.height as f64 - shared::UI_MENU_HEIGHT as f64 * scale_factor) as f32,
+                    0.0,
+                    1.0,
+                );
+            }
 
             rpass.set_pipeline(&self.pipelines.render);
             #[cfg(not(feature = "emulate_constants"))]
@@ -201,7 +204,7 @@ impl RenderPass {
 
         let screen_descriptor = egui_wgpu::ScreenDescriptor {
             size_in_pixels: [ctx.config.width, ctx.config.height],
-            pixels_per_point: window.scale_factor() as f32,
+            pixels_per_point: ui.pixels_per_point(),
         };
 
         for (id, delta) in &textures_delta.set {

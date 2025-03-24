@@ -36,6 +36,7 @@ pub struct Ui {
 impl Ui {
     pub fn new(window: Arc<Window>, event_proxy: EventLoopProxy<UserEvent>) -> Self {
         let context = Context::default();
+        context.options_mut(|w| w.zoom_with_keyboard = false);
         let viewport_id = context.viewport_id();
         let egui_winit_state = State::new(
             context,
@@ -109,5 +110,9 @@ impl Ui {
                 controller.ui(ctx, ui, &self.event_proxy);
             });
         debug_assert_eq!(resp.response.rect.width(), shared::UI_SIDEBAR_WIDTH as f32);
+    }
+
+    pub fn pixels_per_point(&self) -> f32 {
+        self.egui_winit_state.egui_ctx().pixels_per_point()
     }
 }

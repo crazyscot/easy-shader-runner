@@ -70,6 +70,14 @@ impl App {
         }
     }
 
+    pub fn scale_factor_changed(&mut self, scale_factor: f64) {
+        let Self::Graphics(gfx) = self else {
+            return;
+        };
+        gfx.controller
+            .scale_factor_changed(scale_factor, gfx.window.inner_size());
+    }
+
     pub fn keyboard_input(&mut self, event: KeyEvent) {
         let Self::Graphics(gfx) = self else {
             return;
@@ -225,6 +233,9 @@ impl ApplicationHandler<UserEvent> for App {
             } => event_loop.exit(),
             WindowEvent::KeyboardInput { event, .. } => self.keyboard_input(event),
             WindowEvent::Resized(size) => self.resize(size),
+            WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
+                self.scale_factor_changed(scale_factor)
+            }
             WindowEvent::MouseInput { state, button, .. } => self.mouse_input(state, button),
             WindowEvent::MouseWheel { delta, .. } => self.mouse_scroll(delta),
             WindowEvent::CursorMoved { position, .. } => self.mouse_move(position),
@@ -262,7 +273,7 @@ async fn create_graphics(builder: Builder, initial_size: PhysicalSize<u32>, wind
 
     let ui_state = UiState::new();
 
-    let controller = Controller::new(initial_size, &builder.options);
+    let controller = Controller::new(initial_size, window.scale_factor(), &builder.options);
 
     let rpass = RenderPass::new(
         &ctx,
