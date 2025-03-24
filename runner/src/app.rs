@@ -36,7 +36,7 @@ pub struct Builder {
 
 pub enum App {
     Builder(Builder),
-    Building,
+    Building(#[cfg(target_arch = "wasm32")] Option<PhysicalSize<u32>>),
     Graphics(Graphics),
 }
 
@@ -56,6 +56,10 @@ impl App {
 
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
         let Self::Graphics(gfx) = self else {
+            #[cfg(target_arch = "wasm32")]
+            if let Self::Building(_) = self {
+                *self = Self::Building(Some(size));
+            }
             return;
         };
         if size.width != 0 && size.height != 0 {
@@ -155,7 +159,13 @@ impl App {
 
 impl ApplicationHandler<UserEvent> for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        if let Self::Builder(builder) = std::mem::replace(self, Self::Building) {
+        if let Self::Builder(builder) = std::mem::replace(
+            self,
+            Self::Building(
+                #[cfg(target_arch = "wasm32")]
+                None,
+            ),
+        ) {
             let window_attributes = Window::default_attributes().with_title(crate::TITLE);
             #[cfg(not(target_arch = "wasm32"))]
             let window_attributes = window_attributes.with_name(crate::TITLE, "");
@@ -226,7 +236,15 @@ impl ApplicationHandler<UserEvent> for App {
         match event {
             UserEvent::CreateWindow(gfx) => {
                 gfx.window.request_redraw();
-                *self = Self::Graphics(gfx);
+                cfg_if::cfg_if! {
+                    if #[cfg(target_arch = "wasm32")] {
+                        if let Self::Building(Some(size)) = std::mem::replace(self, Self::Graphics(gfx)) {
+                            self.resize(size);
+                        };
+                    } else {
+                        *self = Self::Graphics(gfx);
+                    }
+                };
             }
             #[cfg(not(target_arch = "wasm32"))]
             UserEvent::NewModule(shader_path) => self.new_module(&shader_path),
