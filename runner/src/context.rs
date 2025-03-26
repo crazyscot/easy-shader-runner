@@ -10,10 +10,30 @@ pub struct GraphicsContext {
 
 impl GraphicsContext {
     pub async fn new(window: Arc<Window>, initial_size: PhysicalSize<u32>) -> GraphicsContext {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::from_env_or_default());
-        let initial_surface = instance
-            .create_surface(window)
-            .expect("Failed to create surface from window");
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+            backends: wgpu::util::backend_bits_from_env().unwrap_or(wgpu::Backends::PRIMARY),
+            flags: wgpu::InstanceFlags::default().with_env(),
+            dx12_shader_compiler: wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default(),
+            gles_minor_version: wgpu::Gles3MinorVersion::Automatic,
+        });
+
+        let initial_surface = instance.create_surface(window);
+        #[cfg(target_arch = "wasm32")]
+        if initial_surface.is_err() {
+            web_sys::window()
+                .and_then(|win| win.document())
+                .and_then(|doc| {
+                    let canvas = doc.get_element_by_id("canvas").unwrap();
+                    doc.body().and_then(|body| {
+                        let element = doc.create_element("span").unwrap();
+                        element.set_inner_html("Your browser does not support WebGPU");
+                        element.set_id("incompatible_no_webgpu");
+                        body.replace_child(&element.into(), &canvas.into()).ok()
+                    })
+                })
+                .expect("couldn't append message to document body");
+        }
+        let initial_surface = initial_surface.expect("Failed to create surface from window");
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {

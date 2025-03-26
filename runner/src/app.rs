@@ -181,14 +181,15 @@ impl ApplicationHandler<UserEvent> for App {
 
             cfg_if::cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
-                    use egui_winit::winit::platform::web::WindowExtWebSys;
                     // On wasm, append the canvas to the document body
                     web_sys::window()
                         .and_then(|win| win.document())
                         .and_then(|doc| doc.body())
                         .and_then(|body| {
-                            body.append_child(&web_sys::Element::from(window.canvas().unwrap()))
-                                .ok()
+                            use egui_winit::winit::platform::web::WindowExtWebSys;
+                            let canvas = web_sys::Element::from(window.canvas().unwrap());
+                            canvas.set_id("canvas");
+                            body.append_child(&canvas).ok()
                         })
                         .expect("couldn't append canvas to document body");
                     let size = web_sys::window()
