@@ -44,7 +44,7 @@ impl GraphicsContext {
             .await
             .unwrap();
 
-        let (features, limits) = if cfg!(target_arch = "wasm32") {
+        let (features, limits) = if cfg!(feature = "emulate_constants") {
             Default::default()
         } else {
             (
