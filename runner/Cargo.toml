@@ -7,7 +7,7 @@ edition.workspace = true
 license.workspace = true
 
 [lib]
-crate-type = ["lib", "cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 # See rustc_codegen_spirv/Cargo.toml for details on these features
 [features]
@@ -23,26 +23,21 @@ shared = { path = "../shader/shared" }
 futures = { version = "0.3", default-features = false, features = ["executor"] }
 structopt = { version = "0.3.26", default-features = false }
 bytemuck = { workspace = true }
-egui = "0.31.1"
-egui-wgpu = "0.31.1"
 glam = { workspace = true }
 log = "0.4.26"
 web-time = "1.1.0"
+egui = "0.30.0"
+egui-wgpu = "0.30.0"
+egui-winit = { version = "0.30.0", default-features = false }
+wgpu = { version = "23.0.1", default-features = false, features = ["spirv"] }
 
 [target.'cfg(not(any(target_arch = "wasm32")))'.dependencies]
-wgpu = { version = "24.0.1", default-features = false, features = [
-  "spirv",
-] }
-egui-winit = "0.31.1"
+egui-winit = { version = "*" }
 env_logger = "0.10.0"
 spirv-builder = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wgpu = { version = "24.0.1", default-features = false, features = [
-  "spirv",
-  "webgpu",
-] }
-egui-winit = { version = "0.31.0", default-features = false }
+wgpu = { version = "*", default-features = false, features = ["webgpu"] }
 winit = "0.30.0"
 web-sys = "0.3.77"
 console_error_panic_hook = "0.1.7"
