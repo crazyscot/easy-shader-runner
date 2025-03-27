@@ -4,7 +4,7 @@ use crate::{
     controller::Controller,
     ui::{Ui, UiState},
 };
-use egui_winit::winit::{dpi::PhysicalSize, window::Window};
+use egui_winit::winit::window::Window;
 use shared::push_constants::shader::*;
 use wgpu::util::DeviceExt;
 
@@ -121,7 +121,9 @@ impl RenderPass {
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
-        self.render_shader(ctx, &output_view, controller, window.inner_size());
+        if controller.size.x > 0 && controller.size.y > 0 {
+            self.render_shader(ctx, &output_view, controller);
+        }
         self.render_ui(ctx, &output_view, window, ui, ui_state, controller);
 
         output.present();
@@ -134,7 +136,6 @@ impl RenderPass {
         ctx: &GraphicsContext,
         output_view: &wgpu::TextureView,
         controller: &Controller,
-        size: PhysicalSize<u32>,
     ) {
         let mut encoder = ctx
             .device
@@ -158,11 +159,12 @@ impl RenderPass {
             });
             {
                 let scale_factor = controller.scale_factor;
+                let size = controller.size.as_vec2();
                 rpass.set_viewport(
                     0.0,
                     (shared::UI_MENU_HEIGHT as f64 * scale_factor) as f32,
-                    (size.width as f64 - shared::UI_SIDEBAR_WIDTH as f64 * scale_factor) as f32,
-                    (size.height as f64 - shared::UI_MENU_HEIGHT as f64 * scale_factor) as f32,
+                    size.x,
+                    size.y,
                     0.0,
                     1.0,
                 );

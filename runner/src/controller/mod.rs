@@ -31,7 +31,7 @@ impl Default for Camera {
 }
 
 pub struct Controller {
-    size: UVec2,
+    pub size: UVec2,
     start: Instant,
     fragment_constants: FragmentConstants,
     compute_constants: ComputeConstants,
@@ -92,10 +92,10 @@ impl Controller {
     }
 
     pub fn resize(&mut self, size: PhysicalSize<u32>) {
-        self.size = uvec2(
-            size.width - (UI_SIDEBAR_WIDTH as f64 * self.scale_factor) as u32,
-            size.height - (UI_MENU_HEIGHT as f64 * self.scale_factor) as u32,
-        );
+        let ui_size = uvec2(UI_SIDEBAR_WIDTH, UI_MENU_HEIGHT).as_dvec2() * self.scale_factor;
+        self.size = (uvec2(size.width, size.height).as_dvec2() - ui_size)
+            .max(DVec2::ZERO)
+            .as_uvec2();
     }
 
     pub fn scale_factor_changed(&mut self, scale_factor: f64, size: PhysicalSize<u32>) {
