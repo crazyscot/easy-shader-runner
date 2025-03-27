@@ -175,23 +175,22 @@ impl ApplicationHandler<UserEvent> for App {
             ),
         ) {
             let window_attributes = Window::default_attributes().with_title(crate::TITLE);
-            #[cfg(not(target_arch = "wasm32"))]
-            let window_attributes = window_attributes.with_name(crate::TITLE, "");
+            let window_attributes = {
+                cfg_if::cfg_if! {
+                    if #[cfg(target_arch = "wasm32")] {
+                        use egui_winit::winit::platform::web::WindowAttributesExtWebSys;
+                        window_attributes
+                            .with_prevent_default(false)
+                            .with_append(true)
+                    } else {
+                        window_attributes.with_name(crate::TITLE, "")
+                    }
+                }
+            };
             let window = event_loop.create_window(window_attributes).unwrap();
 
             cfg_if::cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
-                    // On wasm, append the canvas to the document body
-                    web_sys::window()
-                        .and_then(|win| win.document())
-                        .and_then(|doc| doc.body())
-                        .and_then(|body| {
-                            use egui_winit::winit::platform::web::WindowExtWebSys;
-                            let canvas = web_sys::Element::from(window.canvas().unwrap());
-                            canvas.set_id("canvas");
-                            body.append_child(&canvas).ok()
-                        })
-                        .expect("couldn't append canvas to document body");
                     let size = web_sys::window()
                         .map(|win| {
                             let width = win.inner_width().unwrap().unchecked_into_f64() as u32;

@@ -17,13 +17,17 @@ impl GraphicsContext {
             gles_minor_version: wgpu::Gles3MinorVersion::Automatic,
         });
 
+        #[cfg(target_arch = "wasm32")]
+        let canvas = {
+            use egui_winit::winit::platform::web::*;
+            window.canvas().unwrap()
+        };
         let initial_surface = instance.create_surface(window);
         #[cfg(target_arch = "wasm32")]
         if initial_surface.is_err() {
             web_sys::window()
                 .and_then(|win| win.document())
                 .and_then(|doc| {
-                    let canvas = doc.get_element_by_id("canvas").unwrap();
                     doc.body().and_then(|body| {
                         let element = doc.create_element("span").unwrap();
                         element.set_inner_html("Your browser does not support WebGPU");

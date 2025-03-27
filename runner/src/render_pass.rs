@@ -63,13 +63,12 @@ impl RenderPass {
     pub fn compute(&mut self, ctx: &GraphicsContext, controller: &Controller) {
         let workspace = {
             use glam::*;
-            const COMPUTE_THREADS: UVec3 = uvec3(16, 16, 1);
+            const COMPUTE_THREADS: UVec2 = uvec2(16, 16);
             let dim = controller.compute_dimensions();
-            uvec3(
-                ((dim.x as f32) / (COMPUTE_THREADS.x as f32)).ceil() as u32,
-                ((dim.y as f32) / (COMPUTE_THREADS.y as f32)).ceil() as u32,
-                1,
-            )
+            (dim.as_vec2() / COMPUTE_THREADS.as_vec2())
+                .ceil()
+                .as_uvec2()
+                .extend(1)
         };
         let mut encoder = ctx
             .device
