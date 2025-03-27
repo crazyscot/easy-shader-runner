@@ -1,7 +1,7 @@
 use crate::app::Graphics;
 
 pub enum UserEvent {
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(feature = "watch")]
     NewModule(std::path::PathBuf),
     #[cfg(not(target_arch = "wasm32"))]
     SetVSync(bool),

@@ -257,7 +257,7 @@ impl RenderPass {
         ctx.queue.submit(Some(encoder.finish()));
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(feature = "watch")]
     pub fn new_module(&mut self, ctx: &GraphicsContext, shader_path: &std::path::Path) {
         self.pipelines = create_pipelines(
             &ctx.device,

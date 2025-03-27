@@ -147,7 +147,7 @@ impl App {
         gfx.ui.consumes_event(&gfx.window, event)
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(feature = "watch")]
     pub fn new_module(&mut self, shader_path: &std::path::Path) {
         let Self::Graphics(gfx) = self else {
             return;
@@ -257,7 +257,7 @@ impl ApplicationHandler<UserEvent> for App {
                     }
                 };
             }
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(feature = "watch")]
             UserEvent::NewModule(shader_path) => self.new_module(&shader_path),
             #[cfg(not(target_arch = "wasm32"))]
             UserEvent::SetVSync(enable) => self.set_vsync(enable),
