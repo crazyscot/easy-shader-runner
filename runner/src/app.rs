@@ -111,10 +111,16 @@ impl App {
             return;
         };
         let start = web_time::Instant::now();
+        let frame_time = gfx
+            .window
+            .current_monitor()
+            .and_then(|m| m.refresh_rate_millihertz().map(|x| x as f32 / 1000.0))
+            .unwrap_or(60.0)
+            .recip();
         for _ in 0..gfx.controller.iterations() {
             gfx.controller.pre_update();
             gfx.rpass.compute(&gfx.ctx, &gfx.controller);
-            if start.elapsed().as_secs_f32() > 1.0 / gfx.ui_state.fps as f32 {
+            if start.elapsed().as_secs_f32() > frame_time {
                 break;
             }
         }
