@@ -60,12 +60,16 @@ impl RenderPass {
         }
     }
 
-    pub fn compute(&mut self, ctx: &GraphicsContext, controller: &Controller) {
+    pub fn compute(
+        &self,
+        ctx: &GraphicsContext,
+        dimensions: glam::UVec2,
+        push_constants: &ComputeConstants,
+    ) {
         let workspace = {
             use glam::*;
             const COMPUTE_THREADS: UVec2 = uvec2(16, 16);
-            let dim = controller.compute_dimensions();
-            (dim.as_vec2() / COMPUTE_THREADS.as_vec2())
+            (dimensions.as_vec2() / COMPUTE_THREADS.as_vec2())
                 .ceil()
                 .as_uvec2()
                 .extend(1)
@@ -80,14 +84,14 @@ impl RenderPass {
             });
 
             cpass.set_pipeline(&self.pipelines.compute);
-            #[cfg(not(feature = "emulate_constants"))]
-            cpass.set_push_constants(0, controller.compute_constants());
-            #[cfg(feature = "emulate_constants")]
-            ctx.queue.write_buffer(
-                &self.bind_group_data.last().unwrap().buffer,
-                0,
-                controller.compute_constants(),
-            );
+            {
+                let bytes = bytemuck::bytes_of(push_constants);
+                #[cfg(not(feature = "emulate_constants"))]
+                cpass.set_push_constants(0, bytes);
+                #[cfg(feature = "emulate_constants")]
+                ctx.queue
+                    .write_buffer(&self.bind_group_data.last().unwrap().buffer, 0, bytes);
+            }
             for (i, bind_group_data) in self.bind_group_data.iter().enumerate() {
                 cpass.set_bind_group(i as u32, &bind_group_data.bind_group, &[]);
             }
@@ -135,7 +139,7 @@ impl RenderPass {
         &mut self,
         ctx: &GraphicsContext,
         output_view: &wgpu::TextureView,
-        controller: &Controller,
+        controller: &mut Controller,
     ) {
         let mut encoder = ctx
             .device
@@ -171,18 +175,18 @@ impl RenderPass {
             }
 
             rpass.set_pipeline(&self.pipelines.render);
-            #[cfg(not(feature = "emulate_constants"))]
-            rpass.set_push_constants(
-                wgpu::ShaderStages::FRAGMENT,
-                0,
-                controller.fragment_constants(),
-            );
-            #[cfg(feature = "emulate_constants")]
-            ctx.queue.write_buffer(
-                &self.bind_group_data[self.bind_group_data.len() - 2].buffer,
-                0,
-                controller.fragment_constants(),
-            );
+            {
+                let push_constants = controller.fragment_constants();
+                let bytes = bytemuck::bytes_of(&push_constants);
+                #[cfg(not(feature = "emulate_constants"))]
+                rpass.set_push_constants(wgpu::ShaderStages::FRAGMENT, 0, bytes);
+                #[cfg(feature = "emulate_constants")]
+                ctx.queue.write_buffer(
+                    &self.bind_group_data[self.bind_group_data.len() - 2].buffer,
+                    0,
+                    bytes,
+                );
+            }
             for (i, bind_group_data) in self.bind_group_data.iter().enumerate() {
                 rpass.set_bind_group(i as u32, &bind_group_data.bind_group, &[]);
             }

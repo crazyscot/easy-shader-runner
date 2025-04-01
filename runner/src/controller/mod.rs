@@ -33,8 +33,6 @@ impl Default for Camera {
 pub struct Controller {
     pub size: UVec2,
     start: Instant,
-    fragment_constants: FragmentConstants,
-    compute_constants: ComputeConstants,
     cursor: Vec2,
     prev_cursor: Vec2,
     mouse_button_pressed: u32,
@@ -77,8 +75,6 @@ impl Controller {
         Self {
             size,
             start: now,
-            fragment_constants: Default::default(),
-            compute_constants: Default::default(),
             cursor: Vec2::ZERO,
             prev_cursor: Vec2::ZERO,
             mouse_button_pressed: 0,
@@ -158,8 +154,8 @@ impl Controller {
         }
     }
 
-    pub fn pre_render(&mut self) {
-        self.fragment_constants = FragmentConstants {
+    pub fn fragment_constants(&mut self) -> FragmentConstants {
+        let fragment_constants = FragmentConstants {
             size: self.size.into(),
             translate: vec2(0.0, (-(UI_MENU_HEIGHT as f64) * self.scale_factor) as f32) - 0.5,
             time: self.start.elapsed().as_secs_f32(),
@@ -171,28 +167,26 @@ impl Controller {
             debug: self.debug.into(),
         };
         self.prev_cursor = self.cursor;
+        fragment_constants
     }
 
-    pub fn pre_update(&mut self) {
-        self.compute_constants = ComputeConstants {
-            size: self.size.into(),
-            time: self.start.elapsed().as_secs_f32(),
-            zoom: self.camera.zoom,
-            transition: self.transition.into(),
-        };
-        self.transition = !self.transition;
-    }
-
-    pub fn fragment_constants(&self) -> &[u8] {
-        bytemuck::bytes_of(&self.fragment_constants)
-    }
-
-    pub fn compute_constants(&self) -> &[u8] {
-        bytemuck::bytes_of(&self.compute_constants)
-    }
-
-    pub fn compute_dimensions(&self) -> UVec2 {
-        shared::DIM
+    pub fn update<F: Fn(UVec2, &ComputeConstants)>(&mut self, compute: F, allowed_duration: f32) {
+        let start = web_time::Instant::now();
+        for _ in 0..self.simulation_runner.iterations() {
+            compute(
+                shared::DIM,
+                &ComputeConstants {
+                    size: self.size.into(),
+                    time: self.start.elapsed().as_secs_f32(),
+                    zoom: self.camera.zoom,
+                    transition: self.transition.into(),
+                },
+            );
+            self.transition = !self.transition;
+            if start.elapsed().as_secs_f32() > allowed_duration {
+                break;
+            }
+        }
     }
 
     pub fn buffers(&self) -> Vec<BufferDescriptor> {
@@ -203,9 +197,5 @@ impl Controller {
             }),
             shader_stages: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE,
         }]
-    }
-
-    pub fn iterations(&mut self) -> u32 {
-        self.simulation_runner.iterations()
     }
 }

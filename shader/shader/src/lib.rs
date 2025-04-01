@@ -1,5 +1,6 @@
 #![no_std]
 
+use grid::GridRefMut;
 use push_constants::shader::*;
 use shared::*;
 use spirv_std::glam::*;
@@ -17,7 +18,7 @@ pub fn main_fs(
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] cell_grid: &mut [CellState],
     output: &mut Vec4,
 ) {
-    let mut cell_grid = grid::GridRefMut::new(DIM, cell_grid);
+    let mut cell_grid = GridRefMut::new(DIM, cell_grid);
     let coord = frag_coord.xy() + constants.translate;
     let i = ((coord / constants.size.as_vec2() / constants.camera_zoom
         + constants.camera_translate)
@@ -60,7 +61,7 @@ pub fn main_cs(
     constants: &ComputeConstants,
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] cell_grid: &mut [CellState],
 ) {
-    let mut cell_grid = grid::GridRefMut::new(DIM, cell_grid);
+    let mut cell_grid = GridRefMut::new(DIM, cell_grid);
     let index = gid.xy();
     let val = cell_grid.get(index);
 

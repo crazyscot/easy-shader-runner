@@ -110,20 +110,18 @@ impl App {
         let Self::Graphics(gfx) = self else {
             return;
         };
-        let start = web_time::Instant::now();
         let frame_time = gfx
             .window
             .current_monitor()
             .and_then(|m| m.refresh_rate_millihertz().map(|x| x as f32 / 1000.0))
             .unwrap_or(60.0)
             .recip();
-        for _ in 0..gfx.controller.iterations() {
-            gfx.controller.pre_update();
-            gfx.rpass.compute(&gfx.ctx, &gfx.controller);
-            if start.elapsed().as_secs_f32() > frame_time {
-                break;
-            }
-        }
+        gfx.controller.update(
+            |dimensions, push_constants| {
+                gfx.rpass.compute(&gfx.ctx, dimensions, push_constants);
+            },
+            frame_time,
+        );
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -131,7 +129,6 @@ impl App {
             return Ok(());
         };
         gfx.window.request_redraw();
-        gfx.controller.pre_render();
         gfx.rpass.render(
             &gfx.ctx,
             &gfx.window,
