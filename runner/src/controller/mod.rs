@@ -1,7 +1,4 @@
-use crate::{
-    bind_group_buffer::{BindGroupBufferType, BufferDescriptor, SSBO},
-    Options,
-};
+use crate::{bind_group_buffer::BufferDescriptor, Options};
 use egui_winit::winit::{
     dpi::{PhysicalPosition, PhysicalSize},
     event::{ElementState, KeyEvent, MouseButton, MouseScrollDelta},
@@ -191,10 +188,8 @@ impl Controller {
 
     pub fn buffers(&self) -> Vec<BufferDescriptor> {
         vec![BufferDescriptor {
-            buffer_type: BindGroupBufferType::SSBO(SSBO {
-                data: bytemuck::cast_slice(&self.cell_grid.buffer),
-                read_only: false,
-            }),
+            data: bytemuck::cast_slice(&self.cell_grid.buffer),
+            read_only: false,
             shader_stages: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE,
         }]
     }

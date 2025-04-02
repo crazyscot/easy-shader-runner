@@ -1,5 +1,5 @@
 use crate::{
-    bind_group_buffer::{BindGroupBufferType, BufferDescriptor, SSBO},
+    bind_group_buffer::BufferDescriptor,
     context::GraphicsContext,
     controller::Controller,
     ui::{Ui, UiState},
@@ -386,12 +386,9 @@ fn create_bind_group_layouts(
                         binding: 0,
                         visibility: descriptor.shader_stages,
                         ty: wgpu::BindingType::Buffer {
-                            ty: (match descriptor.buffer_type {
-                                BindGroupBufferType::Uniform(_) => wgpu::BufferBindingType::Uniform,
-                                BindGroupBufferType::SSBO(SSBO { read_only, .. }) => {
-                                    wgpu::BufferBindingType::Storage { read_only }
-                                }
-                            }),
+                            ty: wgpu::BufferBindingType::Storage {
+                                read_only: descriptor.read_only,
+                            },
                             has_dynamic_offset: false,
                             min_binding_size: None,
                         },
@@ -448,17 +445,10 @@ fn maybe_create_bind_groups(
         .map(|(i, (descriptor, layout))| {
             let buffer = ctx
                 .device
-                .create_buffer_init(&match &descriptor.buffer_type {
-                    BindGroupBufferType::SSBO(ssbo) => wgpu::util::BufferInitDescriptor {
-                        label: Some("Bind Group Buffer"),
-                        contents: ssbo.data,
-                        usage: wgpu::BufferUsages::STORAGE,
-                    },
-                    BindGroupBufferType::Uniform(uniform) => wgpu::util::BufferInitDescriptor {
-                        label: Some("Bind Group Buffer"),
-                        contents: uniform.data,
-                        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-                    },
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Bind Group Buffer"),
+                    contents: descriptor.data,
+                    usage: wgpu::BufferUsages::STORAGE,
                 });
             BindGroupData {
                 bind_group: ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
