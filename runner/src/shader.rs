@@ -23,6 +23,10 @@ pub fn compile_shader(#[cfg(feature = "watch")] event_proxy: EventLoopProxy<User
 
     let builder = SpirvBuilder::new(crate_path, "spirv-unknown-vulkan1.1")
         .print_metadata(MetadataPrintout::None)
+        .shader_crate_features([
+            #[cfg(feature = "emulate_constants")]
+            "emulate_constants".into(),
+        ])
         .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::SilentExit);
     fn handle_compile_result(compile_result: CompileResult) -> PathBuf {
         match compile_result.module {
