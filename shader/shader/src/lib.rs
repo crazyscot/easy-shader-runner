@@ -19,7 +19,7 @@ pub fn main_fs(
     output: &mut Vec4,
 ) {
     let mut cell_grid = GridRefMut::new(DIM, cell_grid);
-    let coord = frag_coord.xy() + constants.translate;
+    let coord = frag_coord.xy() - constants.translate;
     let i = ((coord / constants.size.as_vec2() / constants.camera_zoom
         + constants.camera_translate)
         * DIM.as_vec2())

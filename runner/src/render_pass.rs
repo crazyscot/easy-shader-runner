@@ -30,6 +30,7 @@ pub struct RenderPass {
     pipeline_layouts: PipelineLayouts,
     ui_renderer: egui_wgpu::Renderer,
     bind_group_data: Vec<BindGroupData>,
+    shader_viewport: egui::Rect,
 }
 
 impl RenderPass {
@@ -57,6 +58,7 @@ impl RenderPass {
             pipeline_layouts,
             ui_renderer,
             bind_group_data,
+            shader_viewport: egui::Rect::NAN,
         }
     }
 
@@ -125,9 +127,6 @@ impl RenderPass {
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
-        if controller.size.x > 0 && controller.size.y > 0 {
-            self.render_shader(ctx, &output_view, controller);
-        }
         self.render_ui(ctx, &output_view, window, ui, ui_state, controller);
 
         output.present();
@@ -140,6 +139,7 @@ impl RenderPass {
         ctx: &GraphicsContext,
         output_view: &wgpu::TextureView,
         controller: &mut Controller,
+        available_rect: egui::Rect,
     ) {
         let mut encoder = ctx
             .device
@@ -161,22 +161,18 @@ impl RenderPass {
                 })],
                 depth_stencil_attachment: None,
             });
-            {
-                let scale_factor = controller.scale_factor;
-                let size = controller.size.as_vec2();
-                rpass.set_viewport(
-                    0.0,
-                    (shared::UI_MENU_HEIGHT as f64 * scale_factor) as f32,
-                    size.x,
-                    size.y,
-                    0.0,
-                    1.0,
-                );
+
+            let size = glam::vec2(available_rect.width(), available_rect.height());
+            if self.shader_viewport != available_rect {
+                self.shader_viewport = available_rect;
+                controller.resize(size.as_uvec2());
             }
+            let offset = self.shader_offset();
+            rpass.set_viewport(offset.x, offset.y, size.x, size.y, 0.0, 1.0);
 
             rpass.set_pipeline(&self.pipelines.render);
             {
-                let push_constants = controller.fragment_constants();
+                let push_constants = controller.prepare_render(offset);
                 let bytes = bytemuck::bytes_of(&push_constants);
                 #[cfg(not(feature = "emulate_constants"))]
                 rpass.set_push_constants(wgpu::ShaderStages::FRAGMENT, 0, bytes);
@@ -205,11 +201,21 @@ impl RenderPass {
         ui_state: &mut UiState,
         controller: &mut Controller,
     ) {
-        let (clipped_primitives, textures_delta) = ui.prepare(window, ui_state, controller);
+        let (clipped_primitives, textures_delta, available_rect, pixels_per_point) =
+            ui.prepare(window, ui_state, controller);
+
+        if available_rect.width() > 0.0 && available_rect.height() > 0.0 {
+            self.render_shader(
+                ctx,
+                output_view,
+                controller,
+                available_rect * pixels_per_point,
+            );
+        }
 
         let screen_descriptor = egui_wgpu::ScreenDescriptor {
             size_in_pixels: [ctx.config.width, ctx.config.height],
-            pixels_per_point: ui.pixels_per_point(),
+            pixels_per_point,
         };
 
         for (id, delta) in &textures_delta.set {
@@ -269,6 +275,10 @@ impl RenderPass {
             ctx.config.format,
             shader_path,
         );
+    }
+
+    pub fn shader_offset(&self) -> glam::Vec2 {
+        glam::vec2(self.shader_viewport.left(), self.shader_viewport.top())
     }
 }
 

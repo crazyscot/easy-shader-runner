@@ -17,7 +17,7 @@ impl FpsCounter {
         self.frames.push_back(one_second_from_now);
         let now = one_second_from_now - Duration::from_secs(1);
 
-        while self.frames.front().map_or(false, |t| t < &now) {
+        while self.frames.front().is_some_and(|t| t < &now) {
             self.frames.pop_front();
         }
 

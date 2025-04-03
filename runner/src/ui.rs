@@ -11,7 +11,6 @@ use std::sync::Arc;
 
 pub struct UiState {
     pub fps: usize,
-    pub show_fps: bool,
     #[cfg(not(target_arch = "wasm32"))]
     pub vsync: bool,
 }
@@ -20,7 +19,6 @@ impl UiState {
     pub fn new() -> Self {
         Self {
             fps: 0,
-            show_fps: true,
             #[cfg(not(target_arch = "wasm32"))]
             vsync: true,
         }
@@ -65,11 +63,13 @@ impl Ui {
         window: &Window,
         ui_state: &mut UiState,
         controller: &mut Controller,
-    ) -> (Vec<ClippedPrimitive>, TexturesDelta) {
+    ) -> (Vec<ClippedPrimitive>, TexturesDelta, egui::Rect, f32) {
         ui_state.fps = self.fps_counter.tick();
         let raw_input = self.egui_winit_state.take_egui_input(window);
+        let mut available_rect = egui::Rect::NAN;
         let full_output = self.egui_winit_state.egui_ctx().run(raw_input, |ctx| {
             self.ui(ctx, ui_state, controller);
+            available_rect = ctx.available_rect();
         });
         self.egui_winit_state
             .handle_platform_output(window, full_output.platform_output);
@@ -77,42 +77,15 @@ impl Ui {
             .egui_winit_state
             .egui_ctx()
             .tessellate(full_output.shapes, full_output.pixels_per_point);
-        (clipped_primitives, full_output.textures_delta)
+        (
+            clipped_primitives,
+            full_output.textures_delta,
+            available_rect,
+            self.egui_winit_state.egui_ctx().pixels_per_point(),
+        )
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    fn send_event(&self, event: UserEvent) {
-        let _ = self.event_proxy.send_event(event);
-    }
-
-    fn ui(&self, ctx: &Context, ui_state: &mut UiState, controller: &mut Controller) {
-        let resp = egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
-                ui.menu_button("Settings", |ui| {
-                    ui.checkbox(&mut ui_state.show_fps, "fps counter");
-                    #[cfg(not(target_arch = "wasm32"))]
-                    if ui.checkbox(&mut ui_state.vsync, "V-Sync").clicked() {
-                        self.send_event(UserEvent::SetVSync(ui_state.vsync));
-                    }
-                });
-                if ui_state.show_fps {
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.style_mut().interaction.selectable_labels = false;
-                        ui.label(format!("FPS: {}", ui_state.fps));
-                    });
-                }
-            });
-        });
-        debug_assert_eq!(resp.response.rect.height(), shared::UI_MENU_HEIGHT as f32);
-        let resp = egui::SidePanel::right("right_panel")
-            .resizable(false)
-            .show(ctx, |ui| {
-                controller.ui(ctx, ui, &self.event_proxy);
-            });
-        debug_assert_eq!(resp.response.rect.width(), shared::UI_SIDEBAR_WIDTH as f32);
-    }
-
-    pub fn pixels_per_point(&self) -> f32 {
-        self.egui_winit_state.egui_ctx().pixels_per_point()
+    fn ui(&self, ctx: &Context, ui_state: &UiState, controller: &mut Controller) {
+        controller.ui(ctx, ui_state, &self.event_proxy);
     }
 }

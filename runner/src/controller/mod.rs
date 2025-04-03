@@ -1,6 +1,5 @@
 use crate::{bind_group_buffer::BufferDescriptor, Options};
 use egui_winit::winit::{
-    dpi::{PhysicalPosition, PhysicalSize},
     event::{ElementState, KeyEvent, MouseButton, MouseScrollDelta},
     keyboard::{Key, NamedKey},
 };
@@ -38,27 +37,21 @@ pub struct Controller {
     cell_grid: grid::Grid<CellState>,
     transition: bool,
     simulation_runner: SimulationRunner,
-    pub scale_factor: f64,
 }
 
 impl Controller {
-    pub fn new(size: PhysicalSize<u32>, scale_factor: f64, options: &Options) -> Self {
+    pub fn new(options: &Options) -> Self {
         let now = Instant::now();
-        let size = uvec2(
-            (size.width as f64 - UI_SIDEBAR_WIDTH as f64 * scale_factor) as u32,
-            (size.height as f64 - UI_MENU_HEIGHT as f64 * scale_factor) as u32,
-        );
-
         let debug = options.debug;
 
         let mut cell_grid = grid::Grid::new(DIM);
-        let seed = [
-            // Initial configuration
-            [0, 1, 0],
-            [1, 1, 0],
-            [0, 1, 1],
-        ];
         {
+            let seed = [
+                // Initial configuration
+                [0, 1, 0],
+                [1, 1, 0],
+                [0, 1, 1],
+            ];
             let p = DIM / 2;
             for (i, row) in seed.into_iter().enumerate() {
                 for (j, val) in row.into_iter().enumerate() {
@@ -70,7 +63,7 @@ impl Controller {
         }
 
         Self {
-            size,
+            size: UVec2::ZERO,
             start: now,
             cursor: Vec2::ZERO,
             prev_cursor: Vec2::ZERO,
@@ -80,27 +73,15 @@ impl Controller {
             cell_grid,
             transition: false,
             simulation_runner: SimulationRunner::new(now, options.debug),
-            scale_factor,
         }
     }
 
-    pub fn resize(&mut self, size: PhysicalSize<u32>) {
-        let ui_size = uvec2(UI_SIDEBAR_WIDTH, UI_MENU_HEIGHT).as_dvec2() * self.scale_factor;
-        self.size = (uvec2(size.width, size.height).as_dvec2() - ui_size)
-            .max(DVec2::ZERO)
-            .as_uvec2();
+    pub fn resize(&mut self, size: UVec2) {
+        self.size = size;
     }
 
-    pub fn scale_factor_changed(&mut self, scale_factor: f64, size: PhysicalSize<u32>) {
-        self.scale_factor = scale_factor;
-        self.resize(size);
-    }
-
-    pub fn mouse_move(&mut self, position: PhysicalPosition<f64>) {
-        self.cursor = vec2(
-            position.x as f32,
-            (position.y as f64 - UI_MENU_HEIGHT as f64 * self.scale_factor) as f32,
-        );
+    pub fn mouse_move(&mut self, position: Vec2) {
+        self.cursor = position;
     }
 
     pub fn mouse_scroll(&mut self, delta: MouseScrollDelta) {
@@ -151,10 +132,10 @@ impl Controller {
         }
     }
 
-    pub fn fragment_constants(&mut self) -> FragmentConstants {
+    pub fn prepare_render(&mut self, offset: Vec2) -> FragmentConstants {
         let fragment_constants = FragmentConstants {
             size: self.size.into(),
-            translate: vec2(0.0, (-(UI_MENU_HEIGHT as f64) * self.scale_factor) as f32) - 0.5,
+            translate: offset,
             time: self.start.elapsed().as_secs_f32(),
             mouse_button_pressed: self.mouse_button_pressed,
             cursor: self.cursor,

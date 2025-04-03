@@ -66,16 +66,7 @@ impl App {
             gfx.ctx.config.width = size.width;
             gfx.ctx.config.height = size.height;
             gfx.ctx.surface.configure(&gfx.ctx.device, &gfx.ctx.config);
-            gfx.controller.resize(size);
         }
-    }
-
-    pub fn scale_factor_changed(&mut self, scale_factor: f64) {
-        let Self::Graphics(gfx) = self else {
-            return;
-        };
-        gfx.controller
-            .scale_factor_changed(scale_factor, gfx.window.inner_size());
     }
 
     pub fn keyboard_input(&mut self, event: KeyEvent) {
@@ -96,6 +87,7 @@ impl App {
         let Self::Graphics(gfx) = self else {
             return;
         };
+        let position = glam::vec2(position.x as f32, position.y as f32) - gfx.rpass.shader_offset();
         gfx.controller.mouse_move(position);
     }
 
@@ -236,9 +228,6 @@ impl ApplicationHandler<UserEvent> for App {
             } => event_loop.exit(),
             WindowEvent::KeyboardInput { event, .. } => self.keyboard_input(event),
             WindowEvent::Resized(size) => self.resize(size),
-            WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
-                self.scale_factor_changed(scale_factor)
-            }
             WindowEvent::MouseInput { state, button, .. } => self.mouse_input(state, button),
             WindowEvent::MouseWheel { delta, .. } => self.mouse_scroll(delta),
             WindowEvent::CursorMoved { position, .. } => self.mouse_move(position),
@@ -276,7 +265,7 @@ async fn create_graphics(builder: Builder, initial_size: PhysicalSize<u32>, wind
 
     let ui_state = UiState::new();
 
-    let controller = Controller::new(initial_size, window.scale_factor(), &builder.options);
+    let controller = Controller::new(&builder.options);
 
     let rpass = RenderPass::new(
         &ctx,
