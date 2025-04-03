@@ -1,10 +1,10 @@
-use crate::{controller::Controller, fps_counter::FpsCounter, user_event::UserEvent};
+use crate::{controller::ControllerTrait, fps_counter::FpsCounter};
 use egui::{
     epaint::{textures::TexturesDelta, ClippedPrimitive},
     Context,
 };
 use egui_winit::{
-    winit::{event::WindowEvent, event_loop::EventLoopProxy, window::Window},
+    winit::{event::WindowEvent, window::Window},
     State,
 };
 use std::sync::Arc;
@@ -27,12 +27,11 @@ impl UiState {
 
 pub struct Ui {
     egui_winit_state: State,
-    event_proxy: EventLoopProxy<UserEvent>,
     fps_counter: FpsCounter,
 }
 
 impl Ui {
-    pub fn new(window: Arc<Window>, event_proxy: EventLoopProxy<UserEvent>) -> Self {
+    pub fn new(window: Arc<Window>) -> Self {
         let context = Context::default();
         context.options_mut(|w| w.zoom_with_keyboard = false);
         let viewport_id = context.viewport_id();
@@ -47,7 +46,6 @@ impl Ui {
 
         Self {
             egui_winit_state,
-            event_proxy,
             fps_counter: FpsCounter::new(),
         }
     }
@@ -58,11 +56,11 @@ impl Ui {
             .consumed
     }
 
-    pub fn prepare(
+    pub fn prepare<C: ControllerTrait>(
         &mut self,
         window: &Window,
         ui_state: &mut UiState,
-        controller: &mut Controller,
+        controller: &mut C,
     ) -> (Vec<ClippedPrimitive>, TexturesDelta, egui::Rect, f32) {
         ui_state.fps = self.fps_counter.tick();
         let raw_input = self.egui_winit_state.take_egui_input(window);
@@ -85,7 +83,7 @@ impl Ui {
         )
     }
 
-    fn ui(&self, ctx: &Context, ui_state: &UiState, controller: &mut Controller) {
-        controller.ui(ctx, ui_state, &self.event_proxy);
+    fn ui<C: ControllerTrait>(&self, ctx: &Context, ui_state: &UiState, controller: &mut C) {
+        controller.ui(ctx, ui_state);
     }
 }

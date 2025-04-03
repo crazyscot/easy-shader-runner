@@ -1,3 +1,4 @@
+use controller::ControllerTrait;
 use egui_winit::winit::event_loop::EventLoop;
 use structopt::StructOpt;
 #[cfg(target_arch = "wasm32")]
@@ -26,8 +27,6 @@ pub struct Options {
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub fn main() {
-    let options = Options::from_args();
-
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -44,6 +43,17 @@ pub fn main() {
         }
     }
 
+    let options = Options::from_args();
+    let controller = controller::Controller::new(&options);
+    start(controller);
+}
+
+fn start<
+    #[cfg(feature = "watch")] C: ControllerTrait + Send,
+    #[cfg(not(feature = "watch"))] C: ControllerTrait,
+>(
+    controller: C,
+) {
     let event_loop = EventLoop::with_user_event().build().unwrap();
 
     // Build the shader before we pop open a window, since it might take a while.
@@ -57,7 +67,7 @@ pub fn main() {
         event_loop.create_proxy(),
         #[cfg(not(target_arch = "wasm32"))]
         shader_path,
-        options,
+        controller,
     );
     event_loop.run_app(&mut app).unwrap()
 }

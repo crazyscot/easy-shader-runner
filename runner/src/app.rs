@@ -1,10 +1,9 @@
 use crate::{
     context::GraphicsContext,
-    controller::Controller,
+    controller::ControllerTrait,
     render_pass::RenderPass,
     ui::{Ui, UiState},
     user_event::UserEvent,
-    Options,
 };
 #[cfg(not(target_arch = "wasm32"))]
 use egui_winit::winit::platform::wayland::*;
@@ -18,39 +17,39 @@ use egui_winit::winit::{
 };
 use std::sync::Arc;
 
-pub struct Graphics {
+pub struct Graphics<C: ControllerTrait> {
     rpass: RenderPass,
     ctx: GraphicsContext,
-    controller: Controller,
+    controller: C,
     ui: Ui,
     ui_state: UiState,
     window: Arc<Window>,
 }
 
-pub struct Builder {
-    event_proxy: EventLoopProxy<UserEvent>,
+pub struct Builder<C: ControllerTrait> {
+    event_proxy: EventLoopProxy<UserEvent<C>>,
     #[cfg(not(target_arch = "wasm32"))]
     shader_path: std::path::PathBuf,
-    options: Options,
+    controller: C,
 }
 
-pub enum App {
-    Builder(Builder),
+pub enum App<C: ControllerTrait> {
+    Builder(Builder<C>),
     Building(#[cfg(target_arch = "wasm32")] Option<PhysicalSize<u32>>),
-    Graphics(Graphics),
+    Graphics(Graphics<C>),
 }
 
-impl App {
+impl<C: ControllerTrait> App<C> {
     pub fn new(
-        event_proxy: EventLoopProxy<UserEvent>,
+        event_proxy: EventLoopProxy<UserEvent<C>>,
         #[cfg(not(target_arch = "wasm32"))] shader_path: std::path::PathBuf,
-        options: Options,
+        controller: C,
     ) -> Self {
         Self::Builder(Builder {
             event_proxy,
             #[cfg(not(target_arch = "wasm32"))]
             shader_path,
-            options,
+            controller,
         })
     }
 
@@ -160,7 +159,7 @@ impl App {
     }
 }
 
-impl ApplicationHandler<UserEvent> for App {
+impl<C: ControllerTrait> ApplicationHandler<UserEvent<C>> for App<C> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if let Self::Builder(builder) = std::mem::replace(
             self,
@@ -235,7 +234,7 @@ impl ApplicationHandler<UserEvent> for App {
         }
     }
 
-    fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: UserEvent) {
+    fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: UserEvent<C>) {
         match event {
             UserEvent::CreateWindow(gfx) => {
                 gfx.window.request_redraw();
@@ -257,27 +256,29 @@ impl ApplicationHandler<UserEvent> for App {
     }
 }
 
-async fn create_graphics(builder: Builder, initial_size: PhysicalSize<u32>, window: Window) {
+async fn create_graphics<C: ControllerTrait>(
+    builder: Builder<C>,
+    initial_size: PhysicalSize<u32>,
+    window: Window,
+) {
     let window = Arc::new(window);
     let ctx = GraphicsContext::new(window.clone(), initial_size).await;
 
-    let ui = Ui::new(window.clone(), builder.event_proxy.clone());
+    let ui = Ui::new(window.clone());
 
     let ui_state = UiState::new();
-
-    let controller = Controller::new(&builder.options);
 
     let rpass = RenderPass::new(
         &ctx,
         #[cfg(not(target_arch = "wasm32"))]
         &builder.shader_path,
-        &controller.buffers(),
+        &builder.controller.buffers(),
     );
 
     let gfx = Graphics {
         rpass,
         ctx,
-        controller,
+        controller: builder.controller,
         ui,
         ui_state,
         window,

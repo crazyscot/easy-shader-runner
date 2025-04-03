@@ -1,9 +1,14 @@
 use spirv_builder::{CompileResult, MetadataPrintout, ModuleResult, SpirvBuilder};
 use std::path::PathBuf;
 #[cfg(feature = "watch")]
-use {crate::user_event::UserEvent, egui_winit::winit::event_loop::EventLoopProxy};
+use {
+    crate::{controller::ControllerTrait, user_event::UserEvent},
+    egui_winit::winit::event_loop::EventLoopProxy,
+};
 
-pub fn compile_shader(#[cfg(feature = "watch")] event_proxy: EventLoopProxy<UserEvent>) -> PathBuf {
+pub fn compile_shader<#[cfg(feature = "watch")] C: ControllerTrait + Send>(
+    #[cfg(feature = "watch")] event_proxy: EventLoopProxy<UserEvent<C>>,
+) -> PathBuf {
     // Hack: spirv_builder builds into a custom directory if running under cargo, to not
     // deadlock, and the default target directory if not. However, packages like `proc-macro2`
     // have different configurations when being built here vs. when building

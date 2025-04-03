@@ -1,7 +1,7 @@
 use crate::{
     bind_group_buffer::BufferDescriptor,
     context::GraphicsContext,
-    controller::Controller,
+    controller::ControllerTrait,
     ui::{Ui, UiState},
 };
 use egui_winit::winit::window::Window;
@@ -102,13 +102,13 @@ impl RenderPass {
         ctx.queue.submit(Some(encoder.finish()));
     }
 
-    pub fn render(
+    pub fn render<C: ControllerTrait>(
         &mut self,
         ctx: &GraphicsContext,
         window: &Window,
         ui: &mut Ui,
         ui_state: &mut UiState,
-        controller: &mut Controller,
+        controller: &mut C,
     ) -> Result<(), wgpu::SurfaceError> {
         let output = match ctx.surface.get_current_texture() {
             Ok(surface_texture) => surface_texture,
@@ -134,11 +134,11 @@ impl RenderPass {
         Ok(())
     }
 
-    fn render_shader(
+    fn render_shader<C: ControllerTrait>(
         &mut self,
         ctx: &GraphicsContext,
         output_view: &wgpu::TextureView,
-        controller: &mut Controller,
+        controller: &mut C,
         available_rect: egui::Rect,
     ) {
         let mut encoder = ctx
@@ -192,14 +192,14 @@ impl RenderPass {
         ctx.queue.submit(Some(encoder.finish()));
     }
 
-    fn render_ui(
+    fn render_ui<C: ControllerTrait>(
         &mut self,
         ctx: &GraphicsContext,
         output_view: &wgpu::TextureView,
         window: &Window,
         ui: &mut Ui,
         ui_state: &mut UiState,
-        controller: &mut Controller,
+        controller: &mut C,
     ) {
         let (clipped_primitives, textures_delta, available_rect, pixels_per_point) =
             ui.prepare(window, ui_state, controller);

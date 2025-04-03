@@ -92,7 +92,7 @@ pub fn main_cs(
             let val = cell_grid.get(index);
             if matches!(val, CellState::On | CellState::Dying) {
                 count += 1
-            };
+            }
         }
     }
 
