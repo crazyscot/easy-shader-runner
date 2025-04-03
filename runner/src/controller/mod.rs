@@ -27,7 +27,7 @@ impl Default for Camera {
 }
 
 pub struct Controller {
-    pub size: UVec2,
+    size: UVec2,
     start: Instant,
     cursor: Vec2,
     prev_cursor: Vec2,
@@ -42,7 +42,6 @@ pub struct Controller {
 impl Controller {
     pub fn new(options: &Options) -> Self {
         let now = Instant::now();
-        let debug = options.debug;
 
         let mut cell_grid = grid::Grid::new(DIM);
         {
@@ -69,7 +68,7 @@ impl Controller {
             prev_cursor: Vec2::ZERO,
             mouse_button_pressed: 0,
             camera: Default::default(),
-            debug,
+            debug: options.debug,
             cell_grid,
             transition: false,
             simulation_runner: SimulationRunner::new(now, options.debug),

@@ -31,8 +31,15 @@ pub fn main() {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-            console_log::init_with_level(log::Level::Debug).expect("could not initialize logger");
+            console_log::init_with_level(log::Level::Info).expect("could not initialize logger");
         } else {
+            let mut rust_log = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_owned());
+            for loud_crate in ["naga", "wgpu_core", "wgpu_hal"] {
+                if !rust_log.contains(&format!("{loud_crate}=")) {
+                    rust_log += &format!(",{loud_crate}=warn");
+                }
+            }
+            std::env::set_var("RUST_LOG", rust_log);
             env_logger::init();
         }
     }
