@@ -5,7 +5,6 @@ use crate::{
     ui::{Ui, UiState},
 };
 use egui_winit::winit::window::Window;
-use shared::push_constants::shader::*;
 use wgpu::util::DeviceExt;
 
 struct Pipelines {
@@ -62,12 +61,7 @@ impl RenderPass {
         }
     }
 
-    pub fn compute(
-        &self,
-        ctx: &GraphicsContext,
-        dimensions: glam::UVec2,
-        push_constants: &ComputeConstants,
-    ) {
+    pub fn compute(&self, ctx: &GraphicsContext, dimensions: glam::UVec2, push_constants: &[u8]) {
         let workspace = {
             use glam::*;
             const COMPUTE_THREADS: UVec2 = uvec2(16, 16);
@@ -87,12 +81,14 @@ impl RenderPass {
 
             cpass.set_pipeline(&self.pipelines.compute);
             {
-                let bytes = bytemuck::bytes_of(push_constants);
                 #[cfg(not(feature = "emulate_constants"))]
-                cpass.set_push_constants(0, bytes);
+                cpass.set_push_constants(0, push_constants);
                 #[cfg(feature = "emulate_constants")]
-                ctx.queue
-                    .write_buffer(&self.bind_group_data.last().unwrap().buffer, 0, bytes);
+                ctx.queue.write_buffer(
+                    &self.bind_group_data.last().unwrap().buffer,
+                    0,
+                    push_constants,
+                );
             }
             for (i, bind_group_data) in self.bind_group_data.iter().enumerate() {
                 cpass.set_bind_group(i as u32, &bind_group_data.bind_group, &[]);
@@ -300,14 +296,14 @@ fn create_pipeline_layouts(
             #[cfg(not(feature = "emulate_constants"))]
             wgpu::PushConstantRange {
                 stages: wgpu::ShaderStages::FRAGMENT,
-                range: 0..std::mem::size_of::<FragmentConstants>() as u32,
+                range: 0..128,
             },
         ]),
         compute: create(&[
             #[cfg(not(feature = "emulate_constants"))]
             wgpu::PushConstantRange {
                 stages: wgpu::ShaderStages::COMPUTE,
-                range: 0..std::mem::size_of::<ComputeConstants>() as u32,
+                range: 0..128,
             },
         ]),
     }
@@ -482,7 +478,7 @@ fn maybe_create_bind_groups(
                     .device
                     .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                         label: None,
-                        contents: &[0; std::mem::size_of::<FragmentConstants>()],
+                        contents: &[0; 128],
                         usage,
                     });
                 BindGroupData {
@@ -502,7 +498,7 @@ fn maybe_create_bind_groups(
                     .device
                     .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                         label: None,
-                        contents: &[0; std::mem::size_of::<ComputeConstants>()],
+                        contents: &[0; 128],
                         usage,
                     });
                 BindGroupData {

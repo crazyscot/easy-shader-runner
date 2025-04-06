@@ -10,7 +10,7 @@
     "build": "vite build"
   },
   "devDependencies": {
-    "runner": "file:../runner/pkg",
+    "runner": "file:pkg",
     "vite": "^6.2.2",
     "vite-plugin-wasm": "^3.4.1"
   }

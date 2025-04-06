@@ -52,8 +52,8 @@
           libgcc.lib
         ];
         shadersCompilePath = "$HOME/.cache/rust-gpu-shaders";
-        template = rustPlatform.buildRustPackage {
-          pname = "template";
+        rustPackage = name: rustPlatform.buildRustPackage {
+          pname = name;
           version = "0.0.0";
           src = ./.;
           cargoLock.lockFile = ./Cargo.lock;
@@ -76,19 +76,20 @@
           '';
           fixupPhase = ''
             cp -r . $out/repo
-            wrapProgram $out/bin/runner \
+            wrapProgram $out/bin/${name} \
               --set LD_LIBRARY_PATH $LD_LIBRARY_PATH:$out/lib:${nixpkgs.lib.makeLibraryPath buildInputs} \
-              --set PATH $PATH:${nixpkgs.lib.makeBinPath [rustPkg]}
+              --set PATH $PATH:${nixpkgs.lib.makeBinPath [rustPkg]} \
+              --set CARGO_MANIFEST_DIR $out/repo/examples/${name}
           '';
         };
       in rec {
-        packages.default = pkgs.writeShellScriptBin "template" ''
+        packages.default = pkgs.writeShellScriptBin "cellular_automata" ''
           export CARGO_TARGET_DIR="${shadersCompilePath}"
-          exec -a "$0" "${template}/bin/runner" "$@"
+          exec -a "$0" "${rustPackage "cellular_automata"}/bin/cellular_automata" "$@"
         '';
         apps.default = {
           type = "app";
-          program = "${packages.default}/bin/template";
+          program = "${packages.default}/bin/cellular_automata";
         };
         devShells.default = with pkgs;
           mkShell {

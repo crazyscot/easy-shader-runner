@@ -19,9 +19,7 @@ emulate_constants = []
 
 [dependencies]
 cfg-if = "1.0.0"
-shared = { path = "../shader/shared" }
 futures = { version = "0.3", default-features = false, features = ["executor"] }
-structopt = { version = "0.3.26", default-features = false }
 bytemuck = { workspace = true }
 glam = { workspace = true }
 log = "0.4.26"

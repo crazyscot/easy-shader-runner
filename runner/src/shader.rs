@@ -1,5 +1,5 @@
 use spirv_builder::{CompileResult, MetadataPrintout, ModuleResult, SpirvBuilder};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 #[cfg(feature = "watch")]
 use {
     crate::{controller::ControllerTrait, user_event::UserEvent},
@@ -8,6 +8,7 @@ use {
 
 pub fn compile_shader<#[cfg(feature = "watch")] C: ControllerTrait + Send>(
     #[cfg(feature = "watch")] event_proxy: EventLoopProxy<UserEvent<C>>,
+    relative_crate_path: impl AsRef<Path>,
 ) -> PathBuf {
     // Hack: spirv_builder builds into a custom directory if running under cargo, to not
     // deadlock, and the default target directory if not. However, packages like `proc-macro2`
@@ -20,10 +21,9 @@ pub fn compile_shader<#[cfg(feature = "watch")] C: ControllerTrait + Send>(
         option_env!("SHADERS_TARGET_DIR").unwrap_or(env!("OUT_DIR")),
     );
     std::env::set_var("PROFILE", env!("PROFILE"));
-    let manifest_dir = option_env!("SHADERS_DIR").unwrap_or(env!("CARGO_MANIFEST_DIR"));
-    let crate_path = [manifest_dir, "..", "shader", "shader"]
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+    let crate_path = [Path::new(&manifest_dir), relative_crate_path.as_ref()]
         .iter()
-        .copied()
         .collect::<PathBuf>();
 
     let builder = SpirvBuilder::new(crate_path, "spirv-unknown-vulkan1.1")

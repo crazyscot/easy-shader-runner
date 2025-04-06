@@ -267,6 +267,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "cellular_automata"
+version = "0.0.0"
+dependencies = [
+ "bytemuck",
+ "cfg-if",
+ "glam",
+ "js-sys",
+ "runner",
+ "shared",
+ "structopt",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "web-time",
+]
+
+[[package]]
 name = "cesu8"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2085,9 +2101,7 @@ dependencies = [
  "glam",
  "js-sys",
  "log",
- "shared",
  "spirv-builder",
- "structopt",
  "wasm-bindgen-futures",
  "web-sys",
  "web-time",

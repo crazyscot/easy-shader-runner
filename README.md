@@ -22,6 +22,6 @@ cargo run
 ### Wasm
 ```bash
 cd wasm-app
-wasm-pack build ../runner/ -- --no-default-features --features emulate_constants
+wasm-pack build ../examples/cellular_automata/ --out-dir ../../wasm-app/pkg
 npm run dev
 ```

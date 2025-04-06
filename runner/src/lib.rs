@@ -1,8 +1,13 @@
-use controller::ControllerTrait;
+pub use bind_group_buffer::BufferDescriptor;
+pub use controller::ControllerTrait;
 use egui_winit::winit::event_loop::EventLoop;
-use structopt::StructOpt;
+pub use ui::UiState;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_futures::wasm_bindgen::{self, prelude::*};
+
+pub use egui_wgpu::wgpu;
+pub use egui_winit::egui;
+pub use egui_winit::winit;
 
 mod app;
 mod bind_group_buffer;
@@ -17,20 +22,17 @@ mod user_event;
 
 const TITLE: &str = "runner";
 
-#[derive(StructOpt, Clone, Copy)]
-#[structopt(name = TITLE)]
-pub struct Options {
-    /// Starts in debug mode and with speed set to 0
-    #[structopt(short, long)]
-    debug: bool,
-}
-
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
-pub fn main() {
+pub fn start<
+    #[cfg(feature = "watch")] C: ControllerTrait + Send,
+    #[cfg(not(feature = "watch"))] C: ControllerTrait,
+>(
+    controller: C,
+    shader_crate_path: impl AsRef<std::path::Path>,
+) {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-            console_log::init_with_level(log::Level::Info).expect("could not initialize logger");
+            let _ = console_log::init();
         } else {
             let mut rust_log = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_owned());
             for loud_crate in ["naga", "wgpu_core", "wgpu_hal"] {
@@ -39,21 +41,10 @@ pub fn main() {
                 }
             }
             std::env::set_var("RUST_LOG", rust_log);
-            env_logger::init();
+            let _ = env_logger::try_init();
         }
     }
 
-    let options = Options::from_args();
-    let controller = controller::Controller::new(&options);
-    start(controller);
-}
-
-fn start<
-    #[cfg(feature = "watch")] C: ControllerTrait + Send,
-    #[cfg(not(feature = "watch"))] C: ControllerTrait,
->(
-    controller: C,
-) {
     let event_loop = EventLoop::with_user_event().build().unwrap();
 
     // Build the shader before we pop open a window, since it might take a while.
@@ -61,6 +52,7 @@ fn start<
     let shader_path = shader::compile_shader(
         #[cfg(feature = "watch")]
         event_loop.create_proxy(),
+        shader_crate_path,
     );
 
     let mut app = app::App::new(
