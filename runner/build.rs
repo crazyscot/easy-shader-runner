@@ -1,9 +1,8 @@
 use std::env;
-use std::error::Error;
 use std::path::PathBuf;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH")?;
+fn main() {
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_OS");
     println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_ARCH");
@@ -12,7 +11,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let profile = env::var("PROFILE").unwrap();
     println!("cargo:rustc-env=PROFILE={profile}");
     if target_arch != "wasm32" {
-        return Ok(());
+        return;
     }
     let mut dir = PathBuf::from(env::var_os("OUT_DIR").unwrap());
     // Strip `$profile/build/*/out`.
@@ -45,7 +44,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .env_remove("CARGO_ENCODED_RUSTFLAGS")
         .stderr(std::process::Stdio::inherit())
         .stdout(std::process::Stdio::inherit())
-        .status()?;
+        .status()
+        .unwrap();
     if !status.success() {
         if let Some(code) = status.code() {
             std::process::exit(code);
@@ -53,5 +53,4 @@ fn main() -> Result<(), Box<dyn Error>> {
             std::process::exit(1);
         }
     }
-    Ok(())
 }
