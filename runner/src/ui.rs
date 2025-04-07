@@ -1,10 +1,10 @@
-use crate::{controller::ControllerTrait, fps_counter::FpsCounter};
+use crate::{controller::ControllerTrait, fps_counter::FpsCounter, user_event::CustomEvent};
 use egui::{
     epaint::{textures::TexturesDelta, ClippedPrimitive},
     Context,
 };
 use egui_winit::{
-    winit::{event::WindowEvent, window::Window},
+    winit::{event::WindowEvent, event_loop::EventLoopProxy, window::Window},
     State,
 };
 use std::sync::Arc;
@@ -61,12 +61,13 @@ impl Ui {
         window: &Window,
         ui_state: &mut UiState,
         controller: &mut C,
+        event_proxy: &EventLoopProxy<CustomEvent<C>>,
     ) -> (Vec<ClippedPrimitive>, TexturesDelta, egui::Rect, f32) {
         ui_state.fps = self.fps_counter.tick();
         let raw_input = self.egui_winit_state.take_egui_input(window);
         let mut available_rect = egui::Rect::NAN;
         let full_output = self.egui_winit_state.egui_ctx().run(raw_input, |ctx| {
-            self.ui(ctx, ui_state, controller);
+            self.ui(ctx, ui_state, controller, event_proxy);
             available_rect = ctx.available_rect();
         });
         self.egui_winit_state
@@ -83,7 +84,15 @@ impl Ui {
         )
     }
 
-    fn ui<C: ControllerTrait>(&self, ctx: &Context, ui_state: &UiState, controller: &mut C) {
-        controller.ui(ctx, ui_state);
+    fn ui<C: ControllerTrait>(
+        &self,
+        ctx: &Context,
+        ui_state: &UiState,
+        controller: &mut C,
+        event_proxy: &EventLoopProxy<CustomEvent<C>>,
+    ) {
+        controller.ui(ctx, ui_state, |user_event| {
+            let _ = event_proxy.send_event(CustomEvent::UserEvent(user_event));
+        });
     }
 }

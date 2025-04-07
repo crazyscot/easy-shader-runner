@@ -1,4 +1,5 @@
 use crate::bind_group_buffer::BufferDescriptor;
+use crate::user_event::UserEvent;
 use egui_winit::winit::event::{ElementState, KeyEvent, MouseButton, MouseScrollDelta};
 use glam::*;
 
@@ -21,5 +22,11 @@ pub trait ControllerTrait: 'static {
         vec![]
     }
 
-    fn ui(&mut self, _ctx: &egui::Context, _ui_state: &crate::ui::UiState) {}
+    fn ui<F: Fn(UserEvent)>(
+        &mut self,
+        _ctx: &egui::Context,
+        _ui_state: &crate::ui::UiState,
+        _send_event: F,
+    ) {
+    }
 }

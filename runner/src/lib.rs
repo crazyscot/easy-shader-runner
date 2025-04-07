@@ -2,6 +2,7 @@ pub use bind_group_buffer::BufferDescriptor;
 pub use controller::ControllerTrait;
 use egui_winit::winit::event_loop::EventLoop;
 pub use ui::UiState;
+pub use user_event::UserEvent;
 
 pub use egui_wgpu::wgpu;
 pub use egui_winit::egui;

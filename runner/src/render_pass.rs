@@ -3,8 +3,9 @@ use crate::{
     context::GraphicsContext,
     controller::ControllerTrait,
     ui::{Ui, UiState},
+    user_event::CustomEvent,
 };
-use egui_winit::winit::window::Window;
+use egui_winit::winit::{event_loop::EventLoopProxy, window::Window};
 use wgpu::util::DeviceExt;
 
 struct Pipelines {
@@ -105,6 +106,7 @@ impl RenderPass {
         ui: &mut Ui,
         ui_state: &mut UiState,
         controller: &mut C,
+        event_proxy: &EventLoopProxy<CustomEvent<C>>,
     ) -> Result<(), wgpu::SurfaceError> {
         let output = match ctx.surface.get_current_texture() {
             Ok(surface_texture) => surface_texture,
@@ -123,7 +125,15 @@ impl RenderPass {
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
-        self.render_ui(ctx, &output_view, window, ui, ui_state, controller);
+        self.render_ui(
+            ctx,
+            &output_view,
+            window,
+            ui,
+            ui_state,
+            controller,
+            event_proxy,
+        );
 
         output.present();
 
@@ -196,9 +206,10 @@ impl RenderPass {
         ui: &mut Ui,
         ui_state: &mut UiState,
         controller: &mut C,
+        event_proxy: &EventLoopProxy<CustomEvent<C>>,
     ) {
         let (clipped_primitives, textures_delta, available_rect, pixels_per_point) =
-            ui.prepare(window, ui_state, controller);
+            ui.prepare(window, ui_state, controller, event_proxy);
 
         if available_rect.width() > 0.0 && available_rect.height() > 0.0 {
             self.render_shader(

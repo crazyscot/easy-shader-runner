@@ -1,6 +1,6 @@
 use crate::Options;
 use glam::*;
-use runner::{egui, wgpu, winit, BufferDescriptor, ControllerTrait, UiState};
+use runner::{egui, wgpu, winit, BufferDescriptor, ControllerTrait, UiState, UserEvent};
 use shared::push_constants::shader::*;
 use shared::*;
 use simulation_runner::SimulationRunner;
@@ -176,7 +176,7 @@ impl ControllerTrait for Controller {
         }]
     }
 
-    fn ui(&mut self, ctx: &egui::Context, _ui_state: &UiState) {
+    fn ui<F: Fn(UserEvent)>(&mut self, ctx: &egui::Context, _ui_state: &UiState, _send_event: F) {
         egui::Window::new("Options")
             .resizable(false)
             .show(ctx, |ui| {

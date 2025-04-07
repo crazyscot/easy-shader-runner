@@ -3,7 +3,7 @@ use crate::{
     controller::ControllerTrait,
     render_pass::RenderPass,
     ui::{Ui, UiState},
-    user_event::UserEvent,
+    user_event::{CustomEvent, UserEvent},
 };
 #[cfg(not(target_arch = "wasm32"))]
 use egui_winit::winit::platform::wayland::*;
@@ -24,10 +24,11 @@ pub struct Graphics<C: ControllerTrait> {
     ui: Ui,
     ui_state: UiState,
     window: Arc<Window>,
+    event_proxy: EventLoopProxy<CustomEvent<C>>,
 }
 
 pub struct Builder<C: ControllerTrait> {
-    event_proxy: EventLoopProxy<UserEvent<C>>,
+    event_proxy: EventLoopProxy<CustomEvent<C>>,
     #[cfg(not(target_arch = "wasm32"))]
     shader_path: std::path::PathBuf,
     controller: C,
@@ -41,7 +42,7 @@ pub enum App<C: ControllerTrait> {
 
 impl<C: ControllerTrait> App<C> {
     pub fn new(
-        event_proxy: EventLoopProxy<UserEvent<C>>,
+        event_proxy: EventLoopProxy<CustomEvent<C>>,
         #[cfg(not(target_arch = "wasm32"))] shader_path: std::path::PathBuf,
         controller: C,
     ) -> Self {
@@ -126,6 +127,7 @@ impl<C: ControllerTrait> App<C> {
             &mut gfx.ui,
             &mut gfx.ui_state,
             &mut gfx.controller,
+            &gfx.event_proxy,
         )
     }
 
@@ -159,7 +161,7 @@ impl<C: ControllerTrait> App<C> {
     }
 }
 
-impl<C: ControllerTrait> ApplicationHandler<UserEvent<C>> for App<C> {
+impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if let Self::Builder(builder) = std::mem::replace(
             self,
@@ -234,9 +236,9 @@ impl<C: ControllerTrait> ApplicationHandler<UserEvent<C>> for App<C> {
         }
     }
 
-    fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: UserEvent<C>) {
+    fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: CustomEvent<C>) {
         match event {
-            UserEvent::CreateWindow(gfx) => {
+            CustomEvent::CreateWindow(gfx) => {
                 gfx.window.request_redraw();
                 cfg_if::cfg_if! {
                     if #[cfg(target_arch = "wasm32")] {
@@ -249,9 +251,11 @@ impl<C: ControllerTrait> ApplicationHandler<UserEvent<C>> for App<C> {
                 };
             }
             #[cfg(feature = "watch")]
-            UserEvent::NewModule(shader_path) => self.new_module(&shader_path),
+            CustomEvent::NewModule(shader_path) => self.new_module(&shader_path),
             #[cfg(not(target_arch = "wasm32"))]
-            UserEvent::SetVSync(enable) => self.set_vsync(enable),
+            CustomEvent::UserEvent(user_event) => match user_event {
+                UserEvent::SetVSync(enable) => self.set_vsync(enable),
+            },
         }
     }
 }
@@ -282,10 +286,11 @@ async fn create_graphics<C: ControllerTrait>(
         ui,
         ui_state,
         window,
+        event_proxy: builder.event_proxy.clone(),
     };
 
     builder
         .event_proxy
-        .send_event(UserEvent::CreateWindow(gfx))
+        .send_event(CustomEvent::CreateWindow(gfx))
         .ok();
 }

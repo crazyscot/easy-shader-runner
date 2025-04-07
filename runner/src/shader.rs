@@ -2,12 +2,12 @@ use spirv_builder::{CompileResult, MetadataPrintout, ModuleResult, SpirvBuilder}
 use std::path::{Path, PathBuf};
 #[cfg(feature = "watch")]
 use {
-    crate::{controller::ControllerTrait, user_event::UserEvent},
+    crate::{controller::ControllerTrait, user_event::CustomEvent},
     egui_winit::winit::event_loop::EventLoopProxy,
 };
 
 pub fn compile_shader<#[cfg(feature = "watch")] C: ControllerTrait + Send>(
-    #[cfg(feature = "watch")] event_proxy: EventLoopProxy<UserEvent<C>>,
+    #[cfg(feature = "watch")] event_proxy: EventLoopProxy<CustomEvent<C>>,
     relative_crate_path: impl AsRef<Path>,
 ) -> PathBuf {
     // Hack: spirv_builder builds into a custom directory if running under cargo, to not
@@ -45,7 +45,9 @@ pub fn compile_shader<#[cfg(feature = "watch")] C: ControllerTrait + Send>(
     let initial_result = builder
         .watch(move |compile_result| {
             std::assert!(event_proxy
-                .send_event(UserEvent::NewModule(handle_compile_result(compile_result)))
+                .send_event(CustomEvent::NewModule(handle_compile_result(
+                    compile_result
+                )))
                 .is_ok())
         })
         .expect("Configuration is correct for watching");
