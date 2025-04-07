@@ -5,7 +5,6 @@ use wasm_bindgen_futures::wasm_bindgen::{self, prelude::*};
 mod controller;
 
 #[derive(StructOpt, Clone, Copy)]
-#[structopt()]
 pub struct Options {
     /// Starts in debug mode and with speed set to 0
     #[structopt(short, long)]
@@ -16,5 +15,9 @@ pub struct Options {
 pub fn main() {
     let options = Options::from_args();
     let controller = controller::Controller::new(&options);
-    runner::start(controller, "shader/shader");
+    runner::start(
+        controller,
+        #[cfg(not(target_arch = "wasm32"))]
+        "shader/shader",
+    );
 }

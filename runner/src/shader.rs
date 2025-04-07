@@ -37,7 +37,7 @@ pub fn compile_shader<#[cfg(feature = "watch")] C: ControllerTrait + Send>(
         match compile_result.module {
             ModuleResult::SingleModule(result) => result,
             ModuleResult::MultiModule(_) => {
-                panic!("called `ModuleResult::unwrap_single()` on a `MultiModule` result")
+                panic!("expected `ModuleResult::SingleModule")
             }
         }
     }

@@ -16,7 +16,7 @@ nix develop
 
 ### Native
 ```bash
-cargo run
+cargo run --bin cellular_automata
 ```
 
 ### Wasm

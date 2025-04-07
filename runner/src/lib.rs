@@ -2,8 +2,6 @@ pub use bind_group_buffer::BufferDescriptor;
 pub use controller::ControllerTrait;
 use egui_winit::winit::event_loop::EventLoop;
 pub use ui::UiState;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen_futures::wasm_bindgen::{self, prelude::*};
 
 pub use egui_wgpu::wgpu;
 pub use egui_winit::egui;
@@ -27,7 +25,7 @@ pub fn start<
     #[cfg(not(feature = "watch"))] C: ControllerTrait,
 >(
     controller: C,
-    shader_crate_path: impl AsRef<std::path::Path>,
+    #[cfg(not(target_arch = "wasm32"))] shader_crate_path: impl AsRef<std::path::Path>,
 ) {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
