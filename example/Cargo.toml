@@ -1,5 +1,5 @@
 [package]
-name = "cellular_automata"
+name = "example"
 version = "0.0.0"
 publish = false
 authors.workspace = true
@@ -18,8 +18,8 @@ glam = { workspace = true }
 web-time = "1.1.0"
 
 [target.'cfg(not(any(target_arch = "wasm32")))'.dependencies]
-runner = { path = "../../runner" }
+runner = { path = "../runner" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures = "0.4.50"
-runner = { path = "../../runner", features = ["emulate_constants"] }
+runner = { path = "../runner", features = ["emulate_constants"] }

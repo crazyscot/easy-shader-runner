@@ -16,13 +16,13 @@ nix develop
 
 ### Native
 ```bash
-cargo run --bin cellular_automata
+cargo run
 ```
 
 ### Wasm
 ```bash
 cd wasm-app
+wasm-pack build ../example --out-dir ../../wasm-app/pkg --dev
 npm install
-wasm-pack build ../examples/cellular_automata/ --out-dir ../../wasm-app/pkg
 npm run dev
 ```
