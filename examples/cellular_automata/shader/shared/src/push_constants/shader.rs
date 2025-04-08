@@ -1,7 +1,7 @@
 use super::*;
 use bytemuck::NoUninit;
 
-#[derive(Copy, Clone, Debug, Default, NoUninit)]
+#[derive(Copy, Clone, Debug, NoUninit)]
 #[repr(C)]
 pub struct FragmentConstants {
     pub size: Size,
@@ -15,7 +15,7 @@ pub struct FragmentConstants {
     pub debug: Bool,
 }
 
-#[derive(Copy, Clone, Debug, Default, NoUninit)]
+#[derive(Copy, Clone, Debug, NoUninit)]
 #[repr(C)]
 pub struct ComputeConstants {
     pub size: Size,

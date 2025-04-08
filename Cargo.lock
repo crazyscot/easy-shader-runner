@@ -273,12 +273,9 @@ dependencies = [
  "bytemuck",
  "cfg-if",
  "glam",
- "js-sys",
  "runner",
  "shared",
  "structopt",
- "wasm-bindgen-futures",
- "web-sys",
  "web-time",
 ]
 

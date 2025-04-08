@@ -11,10 +11,6 @@ impl<'a, T: Copy> GridRef<'a, T> {
         Self { size, buffer }
     }
 
-    pub fn aspect_ratio(&self) -> f32 {
-        self.size.x as f32 / self.size.y as f32
-    }
-
     pub fn get(&self, p: UVec2) -> T {
         self.buffer[(p.y * self.size.x + p.x) as usize]
     }
@@ -32,10 +28,6 @@ impl<'a, T: Copy> GridRefMut<'a, T> {
 
     pub fn as_ref(&self) -> GridRef<'_, T> {
         GridRef::new(self.size, self.buffer)
-    }
-
-    pub fn aspect_ratio(&self) -> f32 {
-        self.size.x as f32 / self.size.y as f32
     }
 
     pub fn get(&self, p: UVec2) -> T {
