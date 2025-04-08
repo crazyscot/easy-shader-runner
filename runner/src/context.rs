@@ -79,15 +79,18 @@ impl GraphicsContext {
             surface: wgpu::Surface<'a>,
             size: PhysicalSize<u32>,
         ) -> (wgpu::Surface<'a>, wgpu::SurfaceConfiguration) {
+            let capabilities = surface.get_capabilities(adapter);
             let mut surface_config = surface
                 .get_default_config(adapter, size.width, size.height)
                 .unwrap_or_else(|| {
                     panic!(
                         "Missing formats/present modes in surface capabilities: {:#?}",
-                        surface.get_capabilities(adapter)
+                        capabilities
                     )
                 });
             surface_config.present_mode = wgpu::PresentMode::AutoVsync;
+            surface_config.format =
+                egui_wgpu::preferred_framebuffer_format(&capabilities.formats).unwrap();
             surface.configure(device, &surface_config);
             (surface, surface_config)
         }
