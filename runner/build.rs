@@ -34,10 +34,19 @@ fn main() {
             "--release",
             "-p",
             "builder",
+            "--no-default-features",
             #[cfg(feature = "emulate_constants")]
             "--features",
             #[cfg(feature = "emulate_constants")]
             "emulate_constants",
+            #[cfg(feature = "use-compiled-tools")]
+            "--features",
+            #[cfg(feature = "use-compiled-tools")]
+            "use-compiled-tools",
+            #[cfg(feature = "use-installed-tools")]
+            "--features",
+            #[cfg(feature = "use-installed-tools")]
+            "use-installed-tools",
             "--target-dir",
         ])
         .arg(dir)
