@@ -52,8 +52,8 @@
           libgcc.lib
         ];
         shadersCompilePath = "$HOME/.cache/rust-gpu-shaders";
-        rustPackage = name: rustPlatform.buildRustPackage {
-          pname = name;
+        rustPackage = rustPlatform.buildRustPackage {
+          pname = "example";
           version = "0.0.0";
           src = ./.;
           cargoLock.lockFile = ./Cargo.lock;
@@ -61,7 +61,6 @@
             "rustc_codegen_spirv-0.9.0" = "sha256-XRw46OpMhOz7zx5x5dBC+SUspyCXxY5nMotzyLPfvNA=";
           };
           buildNoDefaultFeatures = true;
-          buildFeatures = ["use-compiled-tools"];
           dontCargoSetupPostUnpack = true;
           postUnpack = ''
             mkdir -p .cargo
@@ -76,20 +75,20 @@
           '';
           fixupPhase = ''
             cp -r . $out/repo
-            wrapProgram $out/bin/${name} \
+            wrapProgram $out/bin/example \
               --set LD_LIBRARY_PATH $LD_LIBRARY_PATH:$out/lib:${nixpkgs.lib.makeLibraryPath buildInputs} \
               --set PATH $PATH:${nixpkgs.lib.makeBinPath [rustPkg]} \
-              --set CARGO_MANIFEST_DIR $out/repo/examples/${name}
+              --set CARGO_MANIFEST_DIR $out/repo/example
           '';
         };
       in rec {
-        packages.default = pkgs.writeShellScriptBin "cellular_automata" ''
+        packages.default = pkgs.writeShellScriptBin "example" ''
           export CARGO_TARGET_DIR="${shadersCompilePath}"
-          exec -a "$0" "${rustPackage "cellular_automata"}/bin/cellular_automata" "$@"
+          exec -a "$0" "${rustPackage}/bin/example" "$@"
         '';
         apps.default = {
           type = "app";
-          program = "${packages.default}/bin/cellular_automata";
+          program = "${packages.default}/bin/example";
         };
         devShells.default = with pkgs;
           mkShell {
