@@ -56,7 +56,7 @@ impl<T> Grid<T>
 where
     T: Default + Clone + Copy,
 {
-    pub fn new(size: glam::UVec2) -> Self {
+    pub fn new(size: UVec2) -> Self {
         Self {
             size,
             buffer: vec![Default::default(); (size.x * size.y) as usize],

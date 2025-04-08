@@ -18,7 +18,6 @@ emulate_constants = []
 
 [dependencies]
 cfg-if = "1.0.0"
-futures = { version = "0.3", default-features = false, features = ["executor"] }
 bytemuck = { workspace = true }
 glam = { workspace = true }
 log = "0.4.26"
@@ -29,6 +28,7 @@ egui-winit = { version = "0.30.0", default-features = false }
 wgpu = { version = "23.0.1", default-features = false, features = ["spirv"] }
 
 [target.'cfg(not(any(target_arch = "wasm32")))'.dependencies]
+futures = { version = "0.3", default-features = false, features = ["executor"] }
 egui-winit = { version = "*" }
 env_logger = "0.10.0"
 spirv-builder = { workspace = true }
