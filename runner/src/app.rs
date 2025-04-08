@@ -143,7 +143,7 @@ impl<C: ControllerTrait> App<C> {
         gfx.ui.consumes_event(&gfx.window, event)
     }
 
-    #[cfg(feature = "watch")]
+    #[cfg(all(feature = "watch", not(target_arch = "wasm32")))]
     pub fn new_module(&mut self, shader_path: &std::path::Path) {
         let Self::Graphics(gfx) = self else {
             return;
@@ -250,7 +250,7 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
                     }
                 };
             }
-            #[cfg(feature = "watch")]
+            #[cfg(all(feature = "watch", not(target_arch = "wasm32")))]
             CustomEvent::NewModule(shader_path) => self.new_module(&shader_path),
             #[cfg(not(target_arch = "wasm32"))]
             CustomEvent::UserEvent(user_event) => match user_event {

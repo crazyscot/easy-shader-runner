@@ -2,7 +2,7 @@ use crate::app::Graphics;
 use crate::controller::ControllerTrait;
 
 pub enum CustomEvent<C: ControllerTrait> {
-    #[cfg(feature = "watch")]
+    #[cfg(all(feature = "watch", not(target_arch = "wasm32")))]
     NewModule(std::path::PathBuf),
     CreateWindow(Graphics<C>),
     UserEvent(UserEvent),

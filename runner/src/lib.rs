@@ -22,8 +22,8 @@ mod user_event;
 const TITLE: &str = "runner";
 
 pub fn start<
-    #[cfg(feature = "watch")] C: ControllerTrait + Send,
-    #[cfg(not(feature = "watch"))] C: ControllerTrait,
+    #[cfg(all(feature = "watch", not(target_arch = "wasm32")))] C: ControllerTrait + Send,
+    #[cfg(not(all(feature = "watch", not(target_arch = "wasm32"))))] C: ControllerTrait,
 >(
     controller: C,
     #[cfg(not(target_arch = "wasm32"))] shader_crate_path: impl AsRef<std::path::Path>,
