@@ -276,6 +276,7 @@ dependencies = [
  "runner",
  "shared",
  "structopt",
+ "wasm-bindgen-futures",
  "web-time",
 ]
 

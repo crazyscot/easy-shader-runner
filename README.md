@@ -22,6 +22,7 @@ cargo run --bin cellular_automata
 ### Wasm
 ```bash
 cd wasm-app
+npm install
 wasm-pack build ../examples/cellular_automata/ --out-dir ../../wasm-app/pkg
 npm run dev
 ```

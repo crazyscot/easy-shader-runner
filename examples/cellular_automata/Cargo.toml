@@ -21,4 +21,5 @@ web-time = "1.1.0"
 runner = { path = "../../runner" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-futures = "0.4.50"
 runner = { path = "../../runner", features = ["emulate_constants"] }
