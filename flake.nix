@@ -93,7 +93,7 @@
         };
         devShells.default = with pkgs;
           mkShell {
-            nativeBuildInputs = [rustPkg wasm-pack nodejs vulkan-validation-layers];
+            nativeBuildInputs = [rustPkg wasm-pack nodejs vulkan-validation-layers spirv-tools];
             LD_LIBRARY_PATH = "${lib.makeLibraryPath buildInputs}";
           };
       };
