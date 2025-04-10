@@ -1,7 +1,12 @@
 [workspace]
 resolver = "2"
-members = ["runner", "runner/builder", "example", "example/shader/shader"]
-default-members = ["example"]
+members = [
+  "runner",
+  "runner/builder",
+  "runner/builder_launcher",
+  "example",
+  "example/shader/shader",
+]
 
 [workspace.package]
 version = "0.1.0"

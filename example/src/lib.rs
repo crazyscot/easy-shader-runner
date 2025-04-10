@@ -15,9 +15,8 @@ pub struct Options {
 pub fn main() {
     let options = Options::from_args();
     let controller = controller::Controller::new(&options);
-    runner::start(
-        controller,
-        #[cfg(not(target_arch = "wasm32"))]
-        "shader/shader",
-    );
+    #[cfg(all(feature = "watch", not(target_arch = "wasm32")))]
+    runner::start_with_runtime_compilation(controller, "shader/shader");
+    #[cfg(any(not(feature = "watch"), target_arch = "wasm32"))]
+    runner::start_with_prebuilt_shader(controller, include_bytes!(env!("shader.spv")));
 }

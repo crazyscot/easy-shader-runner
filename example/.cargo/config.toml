@@ -1,2 +1,0 @@
-[env]
-SHADER_CRATE = { value = "shader/shader", relative = true }

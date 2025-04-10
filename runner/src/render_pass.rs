@@ -36,7 +36,7 @@ pub struct RenderPass {
 impl RenderPass {
     pub fn new(
         ctx: &GraphicsContext,
-        #[cfg(not(target_arch = "wasm32"))] shader_path: &std::path::Path,
+        shader_bytes: &[u8],
         buffer_data: &[BufferDescriptor],
     ) -> Self {
         let bind_group_layouts = create_bind_group_layouts(ctx, buffer_data);
@@ -45,8 +45,7 @@ impl RenderPass {
             &ctx.device,
             &pipeline_layouts,
             ctx.config.format,
-            #[cfg(not(target_arch = "wasm32"))]
-            shader_path,
+            shader_bytes,
         );
         let bind_group_data = maybe_create_bind_groups(ctx, buffer_data, &bind_group_layouts);
 
@@ -280,7 +279,7 @@ impl RenderPass {
             &ctx.device,
             &self.pipeline_layouts,
             ctx.config.format,
-            shader_path,
+            &std::fs::read(shader_path).unwrap(),
         );
     }
 
@@ -324,19 +323,12 @@ fn create_pipelines(
     device: &wgpu::Device,
     pipeline_layouts: &PipelineLayouts,
     surface_format: wgpu::TextureFormat,
-    #[cfg(not(target_arch = "wasm32"))] shader_path: &std::path::Path,
+    shader_bytes: &[u8],
 ) -> Pipelines {
-    cfg_if::cfg_if! {
-        if #[cfg(target_arch = "wasm32")] {
-            let data = include_bytes!(env!("shader.spv"));
-        } else {
-            let data = &std::fs::read(shader_path).unwrap();
-        }
-    }
-    let spirv = wgpu::util::make_spirv_raw(data);
+    let spirv = wgpu::util::make_spirv(shader_bytes);
     let module = &device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: None,
-        source: wgpu::ShaderSource::SpirV(std::borrow::Cow::Borrowed(&spirv)),
+        source: spirv,
     });
     let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: None,

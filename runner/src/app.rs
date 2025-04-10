@@ -15,6 +15,7 @@ use egui_winit::winit::{
     keyboard::{Key, NamedKey},
     window::{Window, WindowId},
 };
+use std::borrow::Cow;
 use std::sync::Arc;
 
 pub struct Graphics<C: ControllerTrait> {
@@ -29,8 +30,7 @@ pub struct Graphics<C: ControllerTrait> {
 
 pub struct Builder<C: ControllerTrait> {
     event_proxy: EventLoopProxy<CustomEvent<C>>,
-    #[cfg(not(target_arch = "wasm32"))]
-    shader_path: std::path::PathBuf,
+    shader_bytes: Cow<'static, [u8]>,
     controller: C,
 }
 
@@ -40,16 +40,15 @@ pub enum App<C: ControllerTrait> {
     Graphics(Graphics<C>),
 }
 
-impl<C: ControllerTrait> App<C> {
+impl<'a, C: ControllerTrait> App<C> {
     pub fn new(
         event_proxy: EventLoopProxy<CustomEvent<C>>,
-        #[cfg(not(target_arch = "wasm32"))] shader_path: std::path::PathBuf,
+        shader_bytes: Cow<'static, [u8]>,
         controller: C,
     ) -> Self {
         Self::Builder(Builder {
             event_proxy,
-            #[cfg(not(target_arch = "wasm32"))]
-            shader_path,
+            shader_bytes,
             controller,
         })
     }
@@ -272,12 +271,7 @@ async fn create_graphics<C: ControllerTrait>(
 
     let ui_state = UiState::new();
 
-    let rpass = RenderPass::new(
-        &ctx,
-        #[cfg(not(target_arch = "wasm32"))]
-        &builder.shader_path,
-        &builder.controller.buffers(),
-    );
+    let rpass = RenderPass::new(&ctx, &builder.shader_bytes, &builder.controller.buffers());
 
     let gfx = Graphics {
         rpass,

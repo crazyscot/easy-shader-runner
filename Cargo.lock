@@ -198,6 +198,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "builder_launcher"
+version = "0.0.0"
+
+[[package]]
 name = "bumpalo"
 version = "3.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -645,6 +649,7 @@ checksum = "a5d9305ccc6942a704f4335694ecd3de2ea531b114ac2d51f5f843750787a92f"
 name = "example"
 version = "0.0.0"
 dependencies = [
+ "builder_launcher",
  "bytemuck",
  "cfg-if",
  "glam",
