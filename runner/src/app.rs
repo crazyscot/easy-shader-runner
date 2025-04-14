@@ -94,6 +94,10 @@ impl<'a, C: ControllerTrait> App<C> {
         let Self::Graphics(gfx) = self else {
             return;
         };
+        let delta = match delta {
+            MouseScrollDelta::LineDelta(x, y) => glam::vec2(x, y),
+            MouseScrollDelta::PixelDelta(p) => glam::vec2(p.x as f32, p.y as f32) * 0.02,
+        };
         gfx.controller.mouse_scroll(delta);
     }
 

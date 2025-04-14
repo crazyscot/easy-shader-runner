@@ -1,6 +1,6 @@
 use crate::bind_group_buffer::BufferDescriptor;
 use crate::user_event::UserEvent;
-use egui_winit::winit::event::{ElementState, KeyEvent, MouseButton, MouseScrollDelta};
+use egui_winit::winit::event::{ElementState, KeyEvent, MouseButton};
 use glam::*;
 
 pub trait ControllerTrait: 'static {
@@ -8,7 +8,7 @@ pub trait ControllerTrait: 'static {
 
     fn mouse_move(&mut self, _position: Vec2) {}
 
-    fn mouse_scroll(&mut self, _delta: MouseScrollDelta) {}
+    fn mouse_scroll(&mut self, _delta: Vec2) {}
 
     fn mouse_input(&mut self, _state: ElementState, _button: MouseButton) {}
 

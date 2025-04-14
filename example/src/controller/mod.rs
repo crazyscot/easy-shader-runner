@@ -6,7 +6,7 @@ use shared::*;
 use simulation_runner::SimulationRunner;
 use web_time::Instant;
 use winit::{
-    event::{ElementState, KeyEvent, MouseButton, MouseScrollDelta},
+    event::{ElementState, KeyEvent, MouseButton},
     keyboard::{Key, NamedKey},
 };
 
@@ -85,13 +85,9 @@ impl ControllerTrait for Controller {
         self.cursor = position;
     }
 
-    fn mouse_scroll(&mut self, delta: MouseScrollDelta) {
-        let val = match delta {
-            MouseScrollDelta::LineDelta(_, val) => val * 0.1,
-            MouseScrollDelta::PixelDelta(p) => (p.y * 0.005) as f32,
-        };
+    fn mouse_scroll(&mut self, delta: Vec2) {
         let prev_zoom = self.camera.zoom;
-        self.camera.zoom = (prev_zoom * (1.0 + val)).clamp(1.0, 100.0);
+        self.camera.zoom = (prev_zoom * (1.0 + delta.y * 0.1)).clamp(1.0, 100.0);
         let dif = 1.0 / prev_zoom - 1.0 / self.camera.zoom;
         self.camera.translate += dif * self.cursor / self.size.as_vec2();
         self.camera.translate = self
