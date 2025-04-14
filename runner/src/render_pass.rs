@@ -26,7 +26,7 @@ struct BindGroupData {
 
 pub struct RenderPass {
     pipelines: Pipelines,
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
     pipeline_layouts: PipelineLayouts,
     ui_renderer: egui_wgpu::Renderer,
     bind_group_data: Vec<BindGroupData>,
@@ -53,7 +53,7 @@ impl RenderPass {
 
         Self {
             pipelines,
-            #[cfg(not(target_arch = "wasm32"))]
+            #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
             pipeline_layouts,
             ui_renderer,
             bind_group_data,
@@ -273,7 +273,7 @@ impl RenderPass {
         ctx.queue.submit(Some(encoder.finish()));
     }
 
-    #[cfg(all(feature = "watch", not(target_arch = "wasm32")))]
+    #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
     pub fn new_module(&mut self, ctx: &GraphicsContext, shader_path: &std::path::Path) {
         self.pipelines = create_pipelines(
             &ctx.device,

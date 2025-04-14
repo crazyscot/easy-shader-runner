@@ -1,12 +1,6 @@
 [workspace]
 resolver = "2"
-members = [
-  "runner",
-  "runner/builder",
-  "runner/builder_launcher",
-  "example",
-  "example/shader/shader",
-]
+members = ["runner", "example", "example/builder", "example/shader/shader"]
 
 [workspace.package]
 version = "0.1.0"
@@ -25,7 +19,6 @@ rev = "05042d1713012862be103e85bfd2c15dfeccda7b"
 [workspace.dependencies.spirv-builder]
 git = "https://github.com/Rust-GPU/rust-gpu"
 rev = "05042d1713012862be103e85bfd2c15dfeccda7b"
-default-features = false
 
 [profile.dev]
 package.spirv-tools-sys.opt-level = 1

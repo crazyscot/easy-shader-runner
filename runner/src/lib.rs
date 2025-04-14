@@ -17,14 +17,20 @@ mod context;
 mod controller;
 mod fps_counter;
 mod render_pass;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(
+    any(feature = "runtime-compilation", feature = "hot-reload-shader"),
+    not(target_arch = "wasm32")
+))]
 mod shader;
 mod ui;
 mod user_event;
 
 const TITLE: &str = "runner";
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(
+    any(feature = "runtime-compilation", feature = "hot-reload-shader"),
+    not(target_arch = "wasm32")
+))]
 pub fn start_with_runtime_compilation<C: ControllerTrait + Send>(
     controller: C,
     shader_crate_path: impl AsRef<std::path::Path>,
@@ -32,7 +38,11 @@ pub fn start_with_runtime_compilation<C: ControllerTrait + Send>(
     setup_logging();
     let event_loop = EventLoop::with_user_event().build().unwrap();
     // Build the shader before we pop open a window, since it might take a while.
-    let shader_path = shader::compile_shader(event_loop.create_proxy(), shader_crate_path);
+    let shader_path = shader::compile_shader(
+        #[cfg(feature = "hot-reload-shader")]
+        event_loop.create_proxy(),
+        shader_crate_path,
+    );
     let shader_bytes = std::fs::read(shader_path).unwrap();
     start(event_loop, controller, shader_bytes)
 }

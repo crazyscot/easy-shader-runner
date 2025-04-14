@@ -61,6 +61,7 @@
             "rustc_codegen_spirv-0.9.0" = "sha256-XRw46OpMhOz7zx5x5dBC+SUspyCXxY5nMotzyLPfvNA=";
           };
           buildNoDefaultFeatures = true;
+          buildFeatures = ["runtime-compilation"];
           dontCargoSetupPostUnpack = true;
           postUnpack = ''
             mkdir -p .cargo
@@ -70,7 +71,6 @@
           '';
           nativeBuildInputs = [pkgs.makeWrapper];
           configurePhase = ''
-            export SHADERS_DIR="$out/repo/shader"
             export SHADERS_TARGET_DIR=${shadersCompilePath}
           '';
           fixupPhase = ''

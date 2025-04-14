@@ -1,13 +1,13 @@
 use spirv_builder::{CompileResult, MetadataPrintout, ModuleResult, SpirvBuilder};
 use std::path::{Path, PathBuf};
-#[cfg(feature = "watch")]
+#[cfg(feature = "hot-reload-shader")]
 use {
     crate::{controller::ControllerTrait, user_event::CustomEvent},
     egui_winit::winit::event_loop::EventLoopProxy,
 };
 
-pub fn compile_shader<#[cfg(feature = "watch")] C: ControllerTrait + Send>(
-    #[cfg(feature = "watch")] event_proxy: EventLoopProxy<CustomEvent<C>>,
+pub fn compile_shader<#[cfg(feature = "hot-reload-shader")] C: ControllerTrait + Send>(
+    #[cfg(feature = "hot-reload-shader")] event_proxy: EventLoopProxy<CustomEvent<C>>,
     relative_crate_path: impl AsRef<Path>,
 ) -> PathBuf {
     // Hack: spirv_builder builds into a custom directory if running under cargo, to not
@@ -41,7 +41,7 @@ pub fn compile_shader<#[cfg(feature = "watch")] C: ControllerTrait + Send>(
             }
         }
     }
-    #[cfg(feature = "watch")]
+    #[cfg(feature = "hot-reload-shader")]
     let initial_result = builder
         .watch(move |compile_result| {
             std::assert!(event_proxy
@@ -51,7 +51,7 @@ pub fn compile_shader<#[cfg(feature = "watch")] C: ControllerTrait + Send>(
                 .is_ok())
         })
         .expect("Configuration is correct for watching");
-    #[cfg(not(feature = "watch"))]
+    #[cfg(not(feature = "hot-reload-shader"))]
     let initial_result = builder.build().unwrap();
     handle_compile_result(initial_result)
 }

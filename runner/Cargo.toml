@@ -10,10 +10,9 @@ license.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["use-compiled-tools", "watch"]
-use-installed-tools = ["spirv-builder/use-installed-tools"]
-use-compiled-tools = ["spirv-builder/use-compiled-tools"]
-watch = ["spirv-builder/watch"]
+default = ["hot-reload-shader"]
+runtime-compilation = ["dep:spirv-builder"]
+hot-reload-shader = ["spirv-builder/watch"]
 emulate_constants = []
 
 [dependencies]
@@ -31,7 +30,7 @@ wgpu = { version = "23.0.1", default-features = false, features = ["spirv"] }
 futures = { version = "0.3", default-features = false, features = ["executor"] }
 egui-winit = { version = "*" }
 env_logger = "0.10.0"
-spirv-builder = { workspace = true }
+spirv-builder = { workspace = true, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wgpu = { version = "*", default-features = false, features = ["webgpu"] }

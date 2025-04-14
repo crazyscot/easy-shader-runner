@@ -3,7 +3,7 @@ use crate::{
     controller::ControllerTrait,
     render_pass::RenderPass,
     ui::{Ui, UiState},
-    user_event::{CustomEvent, UserEvent},
+    user_event::CustomEvent,
 };
 #[cfg(not(target_arch = "wasm32"))]
 use egui_winit::winit::platform::wayland::*;
@@ -142,7 +142,7 @@ impl<'a, C: ControllerTrait> App<C> {
         gfx.ui.consumes_event(&gfx.window, event)
     }
 
-    #[cfg(all(feature = "watch", not(target_arch = "wasm32")))]
+    #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
     pub fn new_module(&mut self, shader_path: &std::path::Path) {
         let Self::Graphics(gfx) = self else {
             return;
@@ -236,6 +236,8 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
     }
 
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: CustomEvent<C>) {
+        #[cfg(not(target_arch = "wasm32"))]
+        use crate::user_event::UserEvent;
         match event {
             CustomEvent::CreateWindow(gfx) => {
                 gfx.window.request_redraw();
@@ -249,7 +251,7 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
                     }
                 };
             }
-            #[cfg(all(feature = "watch", not(target_arch = "wasm32")))]
+            #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
             CustomEvent::NewModule(shader_path) => self.new_module(&shader_path),
             #[cfg(not(target_arch = "wasm32"))]
             CustomEvent::UserEvent(user_event) => match user_event {
