@@ -5,6 +5,7 @@ publish = false
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+default-run = "example"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
