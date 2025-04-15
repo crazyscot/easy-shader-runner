@@ -497,6 +497,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f25c0e292a7ca6d6498557ff1df68f32c99850012b6ea401cf8daf771f22ff53"
 
 [[package]]
+name = "easy-shader-runner"
+version = "0.0.0"
+dependencies = [
+ "bytemuck",
+ "cfg-if",
+ "console_error_panic_hook",
+ "console_log",
+ "egui",
+ "egui-wgpu",
+ "egui-winit",
+ "env_logger",
+ "futures",
+ "glam",
+ "js-sys",
+ "log",
+ "spirv-builder",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "web-time",
+ "wgpu",
+ "winit",
+]
+
+[[package]]
 name = "ecolor"
 version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -647,8 +671,8 @@ version = "0.0.0"
 dependencies = [
  "bytemuck",
  "cfg-if",
+ "easy-shader-runner",
  "glam",
- "runner",
  "shared",
  "structopt",
  "wasm-bindgen-futures",
@@ -2075,30 +2099,6 @@ checksum = "69cf3a93856b6e5946537278df0d3075596371b1950ccff012f02b0f7eafec8d"
 dependencies = [
  "rustc-hash",
  "spirv",
-]
-
-[[package]]
-name = "runner"
-version = "0.0.0"
-dependencies = [
- "bytemuck",
- "cfg-if",
- "console_error_panic_hook",
- "console_log",
- "egui",
- "egui-wgpu",
- "egui-winit",
- "env_logger",
- "futures",
- "glam",
- "js-sys",
- "log",
- "spirv-builder",
- "wasm-bindgen-futures",
- "web-sys",
- "web-time",
- "wgpu",
- "winit",
 ]
 
 [[package]]

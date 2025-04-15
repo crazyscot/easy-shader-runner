@@ -1,6 +1,8 @@
 use crate::Options;
+use easy_shader_runner::{
+    egui, wgpu, winit, BufferDescriptor, ControllerTrait, UiState, UserEvent,
+};
 use glam::*;
-use runner::{egui, wgpu, winit, BufferDescriptor, ControllerTrait, UiState, UserEvent};
 use shared::push_constants::shader::*;
 use shared::*;
 use simulation_runner::SimulationRunner;

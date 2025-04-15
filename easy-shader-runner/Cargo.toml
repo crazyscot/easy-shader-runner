@@ -1,5 +1,5 @@
 [package]
-name = "runner"
+name = "easy-shader-runner"
 version = "0.0.0"
 publish = false
 authors.workspace = true
