@@ -5,6 +5,10 @@ publish = false
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+readme = "../README.md"
+description = "Use rust shaders and egui on the web and native"
+keywords = ["shaders", "rust-gpu", "egui"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]

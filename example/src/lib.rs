@@ -20,9 +20,9 @@ pub fn main() {
             any(feature = "hot-reload-shader", feature = "runtime-compilation"),
             not(target_arch = "wasm32")
         ))] {
-            runner::start_with_runtime_compilation(controller, "shader/shader");
+            runner::run_with_runtime_compilation(controller, "shader/shader");
         } else {
-            runner::start_with_prebuilt_shader(controller, include_bytes!(env!("shader.spv")));
+            runner::run_with_prebuilt_shader(controller, include_bytes!(env!("shader.spv")));
         }
     }
 }

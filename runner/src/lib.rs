@@ -31,7 +31,7 @@ const TITLE: &str = "runner";
     any(feature = "runtime-compilation", feature = "hot-reload-shader"),
     not(target_arch = "wasm32")
 ))]
-pub fn start_with_runtime_compilation<C: ControllerTrait + Send>(
+pub fn run_with_runtime_compilation<C: ControllerTrait + Send>(
     controller: C,
     shader_crate_path: impl AsRef<std::path::Path>,
 ) {
@@ -47,7 +47,7 @@ pub fn start_with_runtime_compilation<C: ControllerTrait + Send>(
     start(event_loop, controller, shader_bytes)
 }
 
-pub fn start_with_prebuilt_shader<C: ControllerTrait>(controller: C, shader_bytes: &'static [u8]) {
+pub fn run_with_prebuilt_shader<C: ControllerTrait>(controller: C, shader_bytes: &'static [u8]) {
     setup_logging();
     let event_loop = EventLoop::with_user_event().build().unwrap();
     start(event_loop, controller, shader_bytes);

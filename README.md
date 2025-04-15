@@ -1,22 +1,25 @@
-# Template
-A template for a [wgpu](https://github.com/gfx-rs/wgpu) application with [egui](https://github.com/emilk/egui) and [rust-gpu](https://github.com/Rust-GPU/rust-gpu) shaders
+# easy-shader-runner
+Use rust shaders and egui on the web and native
 
-## Try it out
+## How to use
+Implement `easy_shader_runner::ControllerTrait` and call `easy_shader_runner::run*`
+
+## Try with nix
 ```bash
-nix run github:abel465/rust-gpu-template
+nix run github:abel465/easy-shader-runner
 ```
 
-## Development
-#### Set up environment
+## Set up development environment
 ```bash
-git clone https://github.com/abel465/rust-gpu-template.git
-cd rust-gpu-template/
+git clone https://github.com/abel465/easy-shader-runner.git
+cd easy-shader-runner/
 nix develop
 ```
 
+## Run the example
 ### Native
 ```bash
-cargo run -p example
+cargo run
 ```
 
 ### Wasm
