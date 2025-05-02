@@ -3,9 +3,8 @@ use crate::{
     context::GraphicsContext,
     controller::ControllerTrait,
     ui::{Ui, UiState},
-    user_event::CustomEvent,
 };
-use egui_winit::winit::{event_loop::EventLoopProxy, window::Window};
+use egui_winit::winit::{window::Window};
 use wgpu::util::DeviceExt;
 
 struct Pipelines {
@@ -36,11 +35,12 @@ pub struct RenderPass {
 }
 
 impl RenderPass {
-    pub fn new(
+    pub fn new<C: ControllerTrait>(
         ctx: &GraphicsContext,
         shader_bytes: &[u8],
-        buffer_data: &[BufferDescriptor],
+        controller: &mut C,
     ) -> Self {
+        let buffer_data = &controller.describe_buffers();
         let bind_group_layouts = create_bind_group_layouts(ctx, buffer_data);
         let pipeline_layouts = create_pipeline_layouts(ctx, &bind_group_layouts);
         let pipelines = create_pipelines(
@@ -49,7 +49,9 @@ impl RenderPass {
             ctx.config.format,
             shader_bytes,
         );
-        let bind_group_data = maybe_create_bind_groups(ctx, buffer_data, &bind_group_layouts);
+        let (bind_group_data, writable_buffers) =
+            create_bind_groups(ctx, buffer_data, &bind_group_layouts);
+        controller.receive_buffers(writable_buffers);
 
         let ui_renderer = egui_wgpu::Renderer::new(&ctx.device, ctx.config.format, None, 1, false);
 
@@ -108,7 +110,6 @@ impl RenderPass {
         ui: &mut Ui,
         ui_state: &mut UiState,
         controller: &mut C,
-        event_proxy: &EventLoopProxy<CustomEvent<C>>,
     ) -> Result<(), wgpu::SurfaceError> {
         let output = match ctx.surface.get_current_texture() {
             Ok(surface_texture) => surface_texture,
@@ -127,15 +128,7 @@ impl RenderPass {
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
-        self.render_ui(
-            ctx,
-            &output_view,
-            window,
-            ui,
-            ui_state,
-            controller,
-            event_proxy,
-        );
+        self.render_ui(ctx, &output_view, window, ui, ui_state, controller);
 
         output.present();
 
@@ -214,10 +207,9 @@ impl RenderPass {
         ui: &mut Ui,
         ui_state: &mut UiState,
         controller: &mut C,
-        event_proxy: &EventLoopProxy<CustomEvent<C>>,
     ) {
         let (clipped_primitives, textures_delta, available_rect, pixels_per_point) =
-            ui.prepare(window, ui_state, controller, event_proxy);
+            ui.prepare(window, ui_state, controller, ctx);
 
         if available_rect.width() > 0.0 && available_rect.height() > 0.0 {
             self.render_shader(
@@ -455,24 +447,29 @@ fn create_bind_group_layouts(
     layouts.collect()
 }
 
-fn maybe_create_bind_groups(
+fn create_bind_groups(
     ctx: &GraphicsContext,
     buffer_descriptors: &[BufferDescriptor],
     bind_group_layouts: &[wgpu::BindGroupLayout],
-) -> Vec<BindGroupData> {
+) -> (Vec<BindGroupData>, Vec<wgpu::Buffer>) {
+    let mut buffers = vec![];
     let bind_group_data = buffer_descriptors
         .iter()
         .zip(bind_group_layouts)
         .enumerate()
         .map(|(i, (descriptor, layout))| {
+            let mut usage = wgpu::BufferUsages::STORAGE;
+            if descriptor.cpu_writable {
+                usage |= wgpu::BufferUsages::COPY_DST;
+            }
             let buffer = ctx
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("Bind Group Buffer"),
                     contents: descriptor.data,
-                    usage: wgpu::BufferUsages::STORAGE,
+                    usage,
                 });
-            BindGroupData {
+            let bind_group_data = BindGroupData {
                 bind_group: ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
                     layout,
                     entries: &[wgpu::BindGroupEntry {
@@ -483,7 +480,11 @@ fn maybe_create_bind_groups(
                 }),
                 #[cfg(feature = "emulate_constants")]
                 buffer,
+            };
+            if descriptor.cpu_writable {
+                buffers.push(buffer);
             }
+            bind_group_data
         });
     #[cfg(feature = "emulate_constants")]
     let bind_group_data = {
@@ -539,5 +540,5 @@ fn maybe_create_bind_groups(
             },
         ])
     };
-    bind_group_data.collect()
+    (bind_group_data.collect(), buffers)
 }

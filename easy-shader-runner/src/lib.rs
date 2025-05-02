@@ -5,7 +5,7 @@ use user_event::CustomEvent;
 pub use bind_group_buffer::BufferDescriptor;
 pub use controller::ControllerTrait;
 pub use ui::UiState;
-pub use user_event::UserEvent;
+pub use context::GraphicsContext;
 
 pub use egui_wgpu::wgpu;
 pub use egui_winit::egui;

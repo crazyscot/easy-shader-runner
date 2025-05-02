@@ -25,7 +25,6 @@ pub struct Graphics<C: ControllerTrait> {
     ui: Ui,
     ui_state: UiState,
     window: Arc<Window>,
-    event_proxy: EventLoopProxy<CustomEvent<C>>,
 }
 
 pub struct Builder<C: ControllerTrait> {
@@ -133,7 +132,6 @@ impl<'a, C: ControllerTrait> App<C> {
             &mut gfx.ui,
             &mut gfx.ui_state,
             &mut gfx.controller,
-            &gfx.event_proxy,
         )
     }
 
@@ -151,14 +149,6 @@ impl<'a, C: ControllerTrait> App<C> {
         };
         gfx.rpass.new_module(&gfx.ctx, shader_path);
         gfx.window.request_redraw();
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn set_vsync(&mut self, enable: bool) {
-        let Self::Graphics(gfx) = self else {
-            return;
-        };
-        gfx.ctx.set_vsync(enable);
     }
 }
 
@@ -241,7 +231,6 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
 
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: CustomEvent<C>) {
         #[cfg(not(target_arch = "wasm32"))]
-        use crate::user_event::UserEvent;
         match event {
             CustomEvent::CreateWindow(gfx) => {
                 gfx.window.request_redraw();
@@ -257,10 +246,6 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
             }
             #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
             CustomEvent::NewModule(shader_path) => self.new_module(&shader_path),
-            #[cfg(not(target_arch = "wasm32"))]
-            CustomEvent::UserEvent(user_event) => match user_event {
-                UserEvent::SetVSync(enable) => self.set_vsync(enable),
-            },
         }
     }
 }
@@ -277,16 +262,16 @@ async fn create_graphics<C: ControllerTrait>(
 
     let ui_state = UiState::new();
 
-    let rpass = RenderPass::new(&ctx, &builder.shader_bytes, &builder.controller.buffers());
+    let mut controller = builder.controller;
+    let rpass = RenderPass::new(&ctx, &builder.shader_bytes, &mut controller);
 
     let gfx = Graphics {
         rpass,
         ctx,
-        controller: builder.controller,
+        controller,
         ui,
         ui_state,
         window,
-        event_proxy: builder.event_proxy.clone(),
     };
 
     builder

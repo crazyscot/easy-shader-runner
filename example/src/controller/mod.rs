@@ -1,7 +1,5 @@
 use crate::Options;
-use easy_shader_runner::{
-    egui, wgpu, winit, BufferDescriptor, ControllerTrait, UiState, UserEvent,
-};
+use easy_shader_runner::{egui, wgpu, winit, BufferDescriptor, ControllerTrait, UiState};
 use glam::*;
 use shared::push_constants::shader::*;
 use shared::*;
@@ -39,6 +37,7 @@ pub struct Controller {
     cell_grid: grid::Grid<CellState>,
     transition: bool,
     simulation_runner: SimulationRunner,
+    buffer: Option<wgpu::Buffer>,
 }
 
 impl Controller {
@@ -74,6 +73,7 @@ impl Controller {
             cell_grid,
             transition: false,
             simulation_runner: SimulationRunner::new(now, options.debug),
+            buffer: None,
         }
     }
 }
@@ -166,15 +166,26 @@ impl ControllerTrait for Controller {
         }
     }
 
-    fn buffers(&self) -> Vec<BufferDescriptor> {
+    fn describe_buffers(&self) -> Vec<BufferDescriptor> {
         vec![BufferDescriptor {
             data: bytemuck::cast_slice(&self.cell_grid.buffer),
             read_only: false,
             shader_stages: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE,
+            cpu_writable: true,
         }]
     }
 
-    fn ui<F: Fn(UserEvent)>(&mut self, ctx: &egui::Context, _ui_state: &UiState, _send_event: F) {
+    fn receive_buffers(&mut self, mut buffers: Vec<wgpu::Buffer>) {
+        debug_assert!(buffers.len() == 1);
+        self.buffer = Some(buffers.swap_remove(0));
+    }
+
+    fn ui(
+        &mut self,
+        ctx: &egui::Context,
+        _ui_state: &UiState,
+        graphics_context: &easy_shader_runner::GraphicsContext,
+    ) {
         egui::Window::new("Options")
             .resizable(false)
             .show(ctx, |ui| {
@@ -186,6 +197,13 @@ impl ControllerTrait for Controller {
                 );
                 ui.checkbox(&mut self.simulation_runner.paused, "Paused");
                 ui.checkbox(&mut self.debug, "Debug");
+                if ui.button("Reset").clicked() {
+                    graphics_context.queue.write_buffer(
+                        self.buffer.as_ref().unwrap(),
+                        0,
+                        bytemuck::cast_slice(&self.cell_grid.buffer),
+                    );
+                }
                 if self.debug {
                     egui::Grid::new("debug_grid").show(ui, |ui| {
                         ui.label("Elapsed");

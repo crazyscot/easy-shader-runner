@@ -3,3 +3,4 @@
 .envrc
 wasm-app/node_modules
 wasm-app/dist
+rustc-ice*

@@ -1,5 +1,4 @@
 use crate::bind_group_buffer::BufferDescriptor;
-use crate::user_event::UserEvent;
 use egui_winit::winit::event::{ElementState, KeyEvent, MouseButton};
 use glam::*;
 
@@ -19,15 +18,17 @@ pub trait ControllerTrait: 'static {
     #[cfg(feature = "compute")]
     fn update<F: Fn(UVec2, &[u8])>(&mut self, _compute: F, _allowed_duration: f32) {}
 
-    fn buffers(&self) -> Vec<BufferDescriptor> {
+    fn describe_buffers(&self) -> Vec<BufferDescriptor> {
         vec![]
     }
 
-    fn ui<F: Fn(UserEvent)>(
+    fn receive_buffers(&mut self, _buffers: Vec<wgpu::Buffer>) {}
+
+    fn ui(
         &mut self,
         _ctx: &egui::Context,
         _ui_state: &crate::ui::UiState,
-        _send_event: F,
+        _graphics_context: &crate::GraphicsContext,
     ) {
     }
 }
