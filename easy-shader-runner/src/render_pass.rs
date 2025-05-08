@@ -4,7 +4,7 @@ use crate::{
     controller::ControllerTrait,
     ui::{Ui, UiState},
 };
-use egui_winit::winit::{window::Window};
+use egui_winit::winit::window::Window;
 use wgpu::util::DeviceExt;
 
 struct Pipelines {
@@ -21,7 +21,7 @@ struct PipelineLayouts {
 
 struct BindGroupData {
     #[cfg(feature = "emulate_constants")]
-    buffer: wgpu::Buffer,
+    buffer: Option<wgpu::Buffer>,
     bind_group: wgpu::BindGroup,
 }
 
@@ -90,7 +90,12 @@ impl RenderPass {
                 cpass.set_push_constants(0, push_constants);
                 #[cfg(feature = "emulate_constants")]
                 ctx.queue.write_buffer(
-                    &self.bind_group_data.last().unwrap().buffer,
+                    self.bind_group_data
+                        .last()
+                        .unwrap()
+                        .buffer
+                        .as_ref()
+                        .unwrap(),
                     0,
                     push_constants,
                 );
@@ -186,8 +191,11 @@ impl RenderPass {
                             let index = self.bind_group_data.len() - 1;
                         }
                     };
-                    ctx.queue
-                        .write_buffer(&self.bind_group_data[index].buffer, 0, bytes);
+                    ctx.queue.write_buffer(
+                        &self.bind_group_data[index].buffer.as_ref().unwrap(),
+                        0,
+                        bytes,
+                    );
                 }
             }
             for (i, bind_group_data) in self.bind_group_data.iter().enumerate() {
@@ -479,7 +487,7 @@ fn create_bind_groups(
                     label: Some(&format!("bind_group {}", i)),
                 }),
                 #[cfg(feature = "emulate_constants")]
-                buffer,
+                buffer: None,
             };
             if descriptor.cpu_writable {
                 buffers.push(buffer);
@@ -514,7 +522,7 @@ fn create_bind_groups(
                         }],
                         label: Some("emulated fragment constants bind group"),
                     }),
-                    buffer,
+                    buffer: Some(buffer),
                 }
             },
             #[cfg(feature = "compute")]
@@ -535,7 +543,7 @@ fn create_bind_groups(
                         }],
                         label: Some("emulated compute constants bind group"),
                     }),
-                    buffer,
+                    buffer: Some(buffer),
                 }
             },
         ])
