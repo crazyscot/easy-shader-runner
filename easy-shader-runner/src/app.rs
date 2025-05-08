@@ -230,7 +230,6 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
     }
 
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: CustomEvent<C>) {
-        #[cfg(not(target_arch = "wasm32"))]
         match event {
             CustomEvent::CreateWindow(gfx) => {
                 gfx.window.request_redraw();
