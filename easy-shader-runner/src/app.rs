@@ -166,9 +166,7 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
                 cfg_if::cfg_if! {
                     if #[cfg(target_arch = "wasm32")] {
                         use egui_winit::winit::platform::web::WindowAttributesExtWebSys;
-                        window_attributes
-                            .with_prevent_default(false)
-                            .with_append(true)
+                        window_attributes.with_append(true)
                     } else {
                         window_attributes.with_name(crate::TITLE, "")
                     }
