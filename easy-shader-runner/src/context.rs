@@ -10,10 +10,11 @@ pub struct GraphicsContext {
 
 impl GraphicsContext {
     pub async fn new(window: Arc<Window>, initial_size: PhysicalSize<u32>) -> GraphicsContext {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::PRIMARY.with_env(),
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+            backends: wgpu::util::backend_bits_from_env().unwrap_or(wgpu::Backends::PRIMARY),
             flags: wgpu::InstanceFlags::default().with_env(),
-            backend_options: wgpu::BackendOptions::from_env_or_default(),
+            dx12_shader_compiler: wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default(),
+            gles_minor_version: wgpu::Gles3MinorVersion::Automatic,
         });
 
         #[cfg(target_arch = "wasm32")]
