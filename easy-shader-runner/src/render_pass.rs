@@ -168,7 +168,7 @@ impl RenderPass {
                 depth_stencil_attachment: None,
             });
 
-            let size = glam::vec2(available_rect.width(), available_rect.height());
+            let size = glam::vec2(available_rect.width(), available_rect.height()).floor();
             if self.shader_viewport != available_rect {
                 self.shader_viewport = available_rect;
                 controller.resize(size.as_uvec2());
