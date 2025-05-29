@@ -178,6 +178,12 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
                 if #[cfg(target_arch = "wasm32")] {
                     let size = web_sys::window()
                         .map(|win| {
+                            win.document()
+                                .and_then(|doc| doc.body().and_then(|body| {
+                                    doc.get_element_by_id("loader").and_then(|loader| {
+                                        body.remove_child(&loader.into()).ok()
+                                    })
+                                }));
                             let width = win.inner_width().unwrap().unchecked_into_f64() as u32;
                             let height = win.inner_height().unwrap().unchecked_into_f64() as u32;
                             PhysicalSize { width, height }
