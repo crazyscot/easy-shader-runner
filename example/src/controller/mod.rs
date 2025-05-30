@@ -183,7 +183,7 @@ impl ControllerTrait for Controller {
     fn ui(
         &mut self,
         ctx: &egui::Context,
-        _ui_state: &UiState,
+        _ui_state: &mut UiState,
         graphics_context: &easy_shader_runner::GraphicsContext,
     ) {
         egui::Window::new("Options")
