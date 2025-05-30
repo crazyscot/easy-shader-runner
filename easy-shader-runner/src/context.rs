@@ -108,11 +108,14 @@ impl GraphicsContext {
 
     #[cfg(not(target_arch = "wasm32"))]
     pub fn set_vsync(&mut self, enable: bool) {
-        self.config.present_mode = if enable {
+        let present_mode = if enable {
             wgpu::PresentMode::AutoVsync
         } else {
             wgpu::PresentMode::AutoNoVsync
         };
-        self.surface.configure(&self.device, &self.config);
+        if self.config.present_mode != present_mode {
+            self.config.present_mode = present_mode;
+            self.surface.configure(&self.device, &self.config);
+        }
     }
 }

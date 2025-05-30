@@ -12,7 +12,7 @@ impl FpsCounter {
         }
     }
 
-    pub fn tick(&mut self) -> usize {
+    pub fn tick(&mut self) -> u32 {
         let one_second_from_now = Instant::now() + Duration::from_secs(1);
         self.frames.push_back(one_second_from_now);
         let now = one_second_from_now - Duration::from_secs(1);
@@ -21,6 +21,6 @@ impl FpsCounter {
             self.frames.pop_front();
         }
 
-        self.frames.len()
+        self.frames.len() as u32
     }
 }

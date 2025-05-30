@@ -10,7 +10,7 @@ use egui_winit::{
 use std::sync::Arc;
 
 pub struct UiState {
-    pub fps: usize,
+    fps: u32,
     #[cfg(not(target_arch = "wasm32"))]
     pub vsync: bool,
 }
@@ -22,6 +22,10 @@ impl UiState {
             #[cfg(not(target_arch = "wasm32"))]
             vsync: true,
         }
+    }
+
+    pub fn fps(&self) -> &u32 {
+        &self.fps
     }
 }
 
@@ -87,7 +91,7 @@ impl Ui {
     fn ui<C: ControllerTrait>(
         &self,
         ctx: &Context,
-        ui_state: &UiState,
+        ui_state: &mut UiState,
         controller: &mut C,
         graphics_context: &GraphicsContext,
     ) {

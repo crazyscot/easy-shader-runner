@@ -27,7 +27,7 @@ pub trait ControllerTrait: 'static {
     fn ui(
         &mut self,
         _ctx: &egui::Context,
-        _ui_state: &crate::ui::UiState,
+        _ui_state: &mut crate::ui::UiState,
         _graphics_context: &crate::GraphicsContext,
     ) {
     }

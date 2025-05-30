@@ -126,13 +126,15 @@ impl<'a, C: ControllerTrait> App<C> {
             return Ok(());
         };
         gfx.window.request_redraw();
-        gfx.rpass.render(
+        let result = gfx.rpass.render(
             &gfx.ctx,
             &gfx.window,
             &mut gfx.ui,
             &mut gfx.ui_state,
             &mut gfx.controller,
-        )
+        );
+        gfx.ctx.set_vsync(gfx.ui_state.vsync);
+        result
     }
 
     pub fn ui_consumes_event(&mut self, event: &WindowEvent) -> bool {
