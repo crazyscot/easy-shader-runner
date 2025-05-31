@@ -43,14 +43,19 @@ pub fn compile_shader<#[cfg(feature = "hot-reload-shader")] C: ControllerTrait +
     }
     #[cfg(feature = "hot-reload-shader")]
     let initial_result = builder
-        .watch(move |compile_result| {
-            std::assert!(event_proxy
-                .send_event(CustomEvent::NewModule(handle_compile_result(
-                    compile_result
-                )))
-                .is_ok())
+        .watch(move |compile_result, first| {
+            if let Some(first) = first {
+                first.submit(compile_result);
+            } else {
+                std::assert!(event_proxy
+                    .send_event(CustomEvent::NewModule(handle_compile_result(
+                        compile_result
+                    )))
+                    .is_ok())
+            }
         })
-        .expect("Configuration is correct for watching");
+        .expect("Configuration is correct for watching")
+        .unwrap();
     #[cfg(not(feature = "hot-reload-shader"))]
     let initial_result = builder.build().unwrap();
     handle_compile_result(initial_result)
