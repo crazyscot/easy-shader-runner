@@ -133,6 +133,7 @@ impl<'a, C: ControllerTrait> App<C> {
             &mut gfx.ui_state,
             &mut gfx.controller,
         );
+        #[cfg(not(target_arch = "wasm32"))]
         gfx.ctx.set_vsync(gfx.ui_state.vsync);
         result
     }
