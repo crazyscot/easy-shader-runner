@@ -5,9 +5,9 @@ use glam::*;
 pub trait ControllerTrait: 'static {
     fn resize(&mut self, _size: UVec2);
 
-    fn mouse_move(&mut self, _position: Vec2) {}
+    fn mouse_move(&mut self, _position: DVec2) {}
 
-    fn mouse_scroll(&mut self, _delta: Vec2) {}
+    fn mouse_scroll(&mut self, _delta: DVec2) {}
 
     fn mouse_input(&mut self, _state: ElementState, _button: MouseButton) {}
 

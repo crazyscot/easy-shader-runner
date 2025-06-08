@@ -83,13 +83,13 @@ impl ControllerTrait for Controller {
         self.size = size;
     }
 
-    fn mouse_move(&mut self, position: Vec2) {
-        self.cursor = position;
+    fn mouse_move(&mut self, position: DVec2) {
+        self.cursor = position.as_vec2();
     }
 
-    fn mouse_scroll(&mut self, delta: Vec2) {
+    fn mouse_scroll(&mut self, delta: DVec2) {
         let prev_zoom = self.camera.zoom;
-        self.camera.zoom = (prev_zoom * (1.0 + delta.y * 0.1)).clamp(1.0, 100.0);
+        self.camera.zoom = (prev_zoom * (1.0 + delta.y as f32 * 0.1)).clamp(1.0, 100.0);
         let dif = 1.0 / prev_zoom - 1.0 / self.camera.zoom;
         self.camera.translate += dif * self.cursor / self.size.as_vec2();
         self.camera.translate = self

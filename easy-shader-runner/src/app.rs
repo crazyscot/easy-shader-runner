@@ -85,7 +85,7 @@ impl<'a, C: ControllerTrait> App<C> {
         let Self::Graphics(gfx) = self else {
             return;
         };
-        let position = glam::vec2(position.x as f32, position.y as f32) - gfx.rpass.shader_offset();
+        let position = glam::dvec2(position.x, position.y) - gfx.rpass.shader_offset().as_dvec2();
         gfx.controller.mouse_move(position);
     }
 
@@ -94,8 +94,8 @@ impl<'a, C: ControllerTrait> App<C> {
             return;
         };
         let delta = match delta {
-            MouseScrollDelta::LineDelta(x, y) => glam::vec2(x, y),
-            MouseScrollDelta::PixelDelta(p) => glam::vec2(p.x as f32, p.y as f32) * 0.02,
+            MouseScrollDelta::LineDelta(x, y) => glam::dvec2(x as f64, y as f64),
+            MouseScrollDelta::PixelDelta(p) => glam::dvec2(p.x, p.y) * 0.02,
         };
         #[cfg(target_arch = "wasm32")]
         let delta = delta * 0.2777778;
