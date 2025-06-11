@@ -57,7 +57,7 @@ pub fn main_cs(
     #[spirv(push_constant)]
     constants: &ComputeConstants,
     #[cfg(feature = "emulate_constants")]
-    #[spirv(storage_buffer, descriptor_set = 2, binding = 0)]
+    #[spirv(storage_buffer, descriptor_set = 1, binding = 1)]
     constants: &ComputeConstants,
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] cell_grid: &mut [CellState],
 ) {
