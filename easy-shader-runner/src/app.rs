@@ -114,8 +114,9 @@ impl<'a, C: ControllerTrait> App<C> {
             .unwrap_or(60.0)
             .recip();
         gfx.controller.update(
-            |dimensions, push_constants| {
-                gfx.rpass.compute(&gfx.ctx, dimensions, push_constants);
+            |dimensions, threads, push_constants| {
+                gfx.rpass
+                    .compute(&gfx.ctx, dimensions, threads, push_constants);
             },
             frame_time,
         );

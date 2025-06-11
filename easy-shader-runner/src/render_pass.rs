@@ -66,15 +66,14 @@ impl RenderPass {
     }
 
     #[cfg(feature = "compute")]
-    pub fn compute(&self, ctx: &GraphicsContext, dimensions: glam::UVec2, push_constants: &[u8]) {
-        let workspace = {
-            use glam::*;
-            const COMPUTE_THREADS: UVec2 = uvec2(16, 16);
-            (dimensions.as_vec2() / COMPUTE_THREADS.as_vec2())
-                .ceil()
-                .as_uvec2()
-                .extend(1)
-        };
+    pub fn compute(
+        &self,
+        ctx: &GraphicsContext,
+        dimensions: glam::UVec3,
+        threads: glam::UVec3,
+        push_constants: &[u8],
+    ) {
+        let workspace = (dimensions.as_vec3() / threads.as_vec3()).ceil().as_uvec3();
         let mut encoder = ctx
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });

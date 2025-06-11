@@ -147,11 +147,12 @@ impl ControllerTrait for Controller {
         fragment_constants
     }
 
-    fn update<F: Fn(UVec2, &[u8])>(&mut self, compute: F, allowed_duration: f32) {
+    fn update<F: Fn(UVec3, UVec3, &[u8])>(&mut self, compute: F, allowed_duration: f32) {
         let start = web_time::Instant::now();
         for _ in 0..self.simulation_runner.iterations() {
             compute(
-                shared::DIM,
+                shared::DIM.extend(1),
+                uvec3(16, 16, 1),
                 bytemuck::bytes_of(&ComputeConstants {
                     size: self.size.into(),
                     time: self.start.elapsed().as_secs_f32(),

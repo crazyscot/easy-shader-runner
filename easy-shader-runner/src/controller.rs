@@ -15,8 +15,20 @@ pub trait ControllerTrait: 'static {
 
     fn prepare_render(&mut self, offset: Vec2) -> impl bytemuck::NoUninit;
 
+    /// Run the compute shader after rendering
     #[cfg(feature = "compute")]
-    fn update<F: Fn(UVec2, &[u8])>(&mut self, _compute: F, _allowed_duration: f32) {}
+    fn update<
+        F: Fn(
+            UVec3, // dimensions
+            UVec3, // threads (same as declared in compute shader)
+            &[u8], // push_constants
+        ),
+    >(
+        &mut self,
+        _compute: F,
+        _allowed_duration: f32,
+    ) {
+    }
 
     /// Describe the SSBO's you want to use
     /// Outer index signifies the descriptor set
