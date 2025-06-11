@@ -166,13 +166,13 @@ impl ControllerTrait for Controller {
         }
     }
 
-    fn describe_buffers(&self) -> Vec<BufferDescriptor> {
-        vec![BufferDescriptor {
+    fn describe_buffers(&self) -> Vec<Vec<BufferDescriptor>> {
+        vec![vec![BufferDescriptor {
             data: bytemuck::cast_slice(&self.cell_grid.buffer),
             read_only: false,
             shader_stages: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE,
             cpu_writable: true,
-        }]
+        }]]
     }
 
     fn receive_buffers(&mut self, mut buffers: Vec<wgpu::Buffer>) {

@@ -18,10 +18,15 @@ pub trait ControllerTrait: 'static {
     #[cfg(feature = "compute")]
     fn update<F: Fn(UVec2, &[u8])>(&mut self, _compute: F, _allowed_duration: f32) {}
 
-    fn describe_buffers(&self) -> Vec<BufferDescriptor> {
+    /// Describe the SSBO's you want to use
+    /// Outer index signifies the descriptor set
+    /// Inner index signifies the binding
+    fn describe_buffers(&self) -> Vec<Vec<BufferDescriptor>> {
         vec![]
     }
 
+    /// Receive the buffers described in [`Self::describe_buffers`] with [`BufferDescriptor::cpu_writable`] set to true
+    /// The order is the same as described
     fn receive_buffers(&mut self, _buffers: Vec<wgpu::Buffer>) {}
 
     fn ui(

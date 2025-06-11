@@ -383,27 +383,31 @@ fn create_pipelines(
 
 fn create_bind_group_layouts(
     ctx: &GraphicsContext,
-    buffer_descriptors: &[BufferDescriptor],
+    buffer_descriptors2: &[Vec<BufferDescriptor>],
 ) -> Vec<wgpu::BindGroupLayout> {
-    let layouts = buffer_descriptors
+    let layouts = buffer_descriptors2
         .iter()
         .enumerate()
-        .map(|(i, descriptor)| {
+        .map(|(layout_index, descriptors)| {
             ctx.device
                 .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                    entries: &[wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: descriptor.shader_stages,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Storage {
-                                read_only: descriptor.read_only,
+                    entries: &descriptors
+                        .iter()
+                        .enumerate()
+                        .map(|(i, descriptor)| wgpu::BindGroupLayoutEntry {
+                            binding: i as u32,
+                            visibility: descriptor.shader_stages,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage {
+                                    read_only: descriptor.read_only,
+                                },
+                                has_dynamic_offset: false,
+                                min_binding_size: None,
                             },
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    }],
-                    label: Some(&format!("bind_group_layout {}", i)),
+                            count: None,
+                        })
+                        .collect::<Vec<_>>(),
+                    label: Some(&format!("bind_group_layout {}", layout_index)),
                 })
         });
     #[cfg(feature = "emulate_constants")]
@@ -442,40 +446,52 @@ fn create_bind_group_layouts(
 
 fn create_bind_groups(
     ctx: &GraphicsContext,
-    buffer_descriptors: &[BufferDescriptor],
+    buffer_descriptors2: &[Vec<BufferDescriptor>],
     bind_group_layouts: &[wgpu::BindGroupLayout],
 ) -> (Vec<BindGroupData>, Vec<wgpu::Buffer>) {
-    let mut buffers = vec![];
-    let bind_group_data = buffer_descriptors
+    let mut writable_buffers = vec![];
+    let bind_group_data = buffer_descriptors2
         .iter()
         .zip(bind_group_layouts)
         .enumerate()
-        .map(|(i, (descriptor, layout))| {
-            let mut usage = wgpu::BufferUsages::STORAGE;
-            if descriptor.cpu_writable {
-                usage |= wgpu::BufferUsages::COPY_DST;
-            }
-            let buffer = ctx
-                .device
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Bind Group Buffer"),
-                    contents: descriptor.data,
-                    usage,
-                });
+        .map(|(layout_index, (descriptors, layout))| {
+            let buffers = descriptors
+                .iter()
+                .map(|descriptor| {
+                    let mut usage = wgpu::BufferUsages::STORAGE;
+                    if descriptor.cpu_writable {
+                        usage |= wgpu::BufferUsages::COPY_DST;
+                    }
+                    let buffer = ctx
+                        .device
+                        .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                            label: Some("Bind Group Buffer"),
+                            contents: descriptor.data,
+                            usage,
+                        });
+                    buffer
+                })
+                .collect::<Vec<_>>();
             let bind_group_data = BindGroupData {
                 bind_group: ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
                     layout,
-                    entries: &[wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: buffer.as_entire_binding(),
-                    }],
-                    label: Some(&format!("bind_group {}", i)),
+                    entries: &buffers
+                        .iter()
+                        .enumerate()
+                        .map(|(i, buffer)| wgpu::BindGroupEntry {
+                            binding: i as u32,
+                            resource: buffer.as_entire_binding(),
+                        })
+                        .collect::<Vec<_>>(),
+                    label: Some(&format!("bind_group {}", layout_index)),
                 }),
                 #[cfg(feature = "emulate_constants")]
                 buffers: vec![],
             };
-            if descriptor.cpu_writable {
-                buffers.push(buffer);
+            for (buffer, descriptor) in buffers.into_iter().zip(descriptors) {
+                if descriptor.cpu_writable {
+                    writable_buffers.push(buffer);
+                }
             }
             bind_group_data
         });
@@ -522,5 +538,5 @@ fn create_bind_groups(
             }
         }])
     };
-    (bind_group_data.collect(), buffers)
+    (bind_group_data.collect(), writable_buffers)
 }
