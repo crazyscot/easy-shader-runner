@@ -212,10 +212,10 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
         }
         match event {
             WindowEvent::RedrawRequested => {
-                #[cfg(feature = "compute")]
                 if let Err(wgpu::SurfaceError::OutOfMemory) = self.render() {
                     event_loop.exit()
                 }
+                #[cfg(feature = "compute")]
                 self.update();
             }
             WindowEvent::CloseRequested
