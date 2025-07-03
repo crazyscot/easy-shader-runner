@@ -1,4 +1,3 @@
-use crate::bind_group_buffer::BufferDescriptor;
 use egui_winit::winit::event::{ElementState, KeyEvent, MouseButton};
 use glam::*;
 
@@ -30,16 +29,12 @@ pub trait ControllerTrait: 'static {
     ) {
     }
 
-    /// Describe the SSBO's you want to use
-    /// Outer index signifies the descriptor set
-    /// Inner index signifies the binding
-    fn describe_buffers(&self) -> Vec<Vec<BufferDescriptor>> {
-        vec![]
+    fn describe_bind_groups(
+        &mut self,
+        _device: &wgpu::Device,
+    ) -> (Vec<wgpu::BindGroupLayout>, Vec<wgpu::BindGroup>) {
+        (vec![], vec![])
     }
-
-    /// Receive the buffers described in [`Self::describe_buffers`] with [`BufferDescriptor::cpu_writable`] set to true
-    /// The order is the same as described
-    fn receive_buffers(&mut self, _buffers: Vec<wgpu::Buffer>) {}
 
     fn ui(
         &mut self,

@@ -2,7 +2,6 @@ use egui_winit::winit::event_loop::EventLoop;
 use std::borrow::Cow;
 use user_event::CustomEvent;
 
-pub use bind_group_buffer::BufferDescriptor;
 pub use controller::ControllerTrait;
 pub use ui::UiState;
 pub use context::GraphicsContext;
@@ -12,7 +11,6 @@ pub use egui_winit::egui;
 pub use egui_winit::winit;
 
 mod app;
-mod bind_group_buffer;
 mod context;
 mod controller;
 mod fps_counter;

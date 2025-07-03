@@ -1,11 +1,16 @@
 use crate::{
-    bind_group_buffer::BufferDescriptor,
     context::GraphicsContext,
     controller::ControllerTrait,
     ui::{Ui, UiState},
 };
 use egui_winit::winit::window::Window;
-use wgpu::util::DeviceExt;
+
+#[cfg(feature = "emulate_constants")]
+struct EmulateConstantsBuffer {
+    render: wgpu::Buffer,
+    #[cfg(feature = "compute")]
+    compute: wgpu::Buffer,
+}
 
 struct Pipelines {
     render: wgpu::RenderPipeline,
@@ -19,19 +24,15 @@ struct PipelineLayouts {
     compute: wgpu::PipelineLayout,
 }
 
-struct BindGroupData {
-    #[cfg(feature = "emulate_constants")]
-    buffers: Vec<wgpu::Buffer>,
-    bind_group: wgpu::BindGroup,
-}
-
 pub struct RenderPass {
     pipelines: Pipelines,
     #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
     pipeline_layouts: PipelineLayouts,
     ui_renderer: egui_wgpu::Renderer,
-    bind_group_data: Vec<BindGroupData>,
+    bind_groups: Vec<wgpu::BindGroup>,
     shader_viewport: egui::Rect,
+    #[cfg(feature = "emulate_constants")]
+    emulate_constants_buffer: EmulateConstantsBuffer,
 }
 
 impl RenderPass {
@@ -40,18 +41,28 @@ impl RenderPass {
         shader_bytes: &[u8],
         controller: &mut C,
     ) -> Self {
-        let buffer_data = &controller.describe_buffers();
-        let bind_group_layouts = create_bind_group_layouts(ctx, buffer_data);
-        let pipeline_layouts = create_pipeline_layouts(ctx, &bind_group_layouts);
+        let (layouts, bind_groups) = controller.describe_bind_groups(&ctx.device);
+        let bind_group_layouts = layouts.iter();
+
+        #[cfg(feature = "emulate_constants")]
+        let (emulate_constants_layout, emulate_constants_bind_group, emulate_constants_buffer) =
+            create_emulate_constants_bind_groups(&ctx.device);
+        #[cfg(feature = "emulate_constants")]
+        let bind_group_layouts = bind_group_layouts.chain([&emulate_constants_layout]);
+        #[cfg(feature = "emulate_constants")]
+        let bind_groups = bind_groups
+            .into_iter()
+            .chain([emulate_constants_bind_group])
+            .collect::<Vec<_>>();
+
+        let pipeline_layouts =
+            create_pipeline_layouts(ctx, &bind_group_layouts.collect::<Vec<_>>());
         let pipelines = create_pipelines(
             &ctx.device,
             &pipeline_layouts,
             ctx.config.format,
             shader_bytes,
         );
-        let (bind_group_data, writable_buffers) =
-            create_bind_groups(ctx, buffer_data, &bind_group_layouts);
-        controller.receive_buffers(writable_buffers);
 
         let ui_renderer = egui_wgpu::Renderer::new(&ctx.device, ctx.config.format, None, 1, false);
 
@@ -60,8 +71,10 @@ impl RenderPass {
             #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
             pipeline_layouts,
             ui_renderer,
-            bind_group_data,
+            bind_groups,
             shader_viewport: egui::Rect::NAN,
+            #[cfg(feature = "emulate_constants")]
+            emulate_constants_buffer,
         }
     }
 
@@ -88,14 +101,11 @@ impl RenderPass {
                 #[cfg(not(feature = "emulate_constants"))]
                 cpass.set_push_constants(0, push_constants);
                 #[cfg(feature = "emulate_constants")]
-                ctx.queue.write_buffer(
-                    &self.bind_group_data.last().unwrap().buffers[1],
-                    0,
-                    push_constants,
-                );
+                ctx.queue
+                    .write_buffer(&self.emulate_constants_buffer.compute, 0, push_constants);
             }
-            for (i, bind_group_data) in self.bind_group_data.iter().enumerate() {
-                cpass.set_bind_group(i as u32, &bind_group_data.bind_group, &[]);
+            for (i, bind_group) in self.bind_groups.iter().enumerate() {
+                cpass.set_bind_group(i as u32, bind_group, &[]);
             }
             cpass.dispatch_workgroups(workspace.x, workspace.y, workspace.z);
         }
@@ -177,16 +187,11 @@ impl RenderPass {
                 #[cfg(not(feature = "emulate_constants"))]
                 rpass.set_push_constants(wgpu::ShaderStages::FRAGMENT, 0, bytes);
                 #[cfg(feature = "emulate_constants")]
-                {
-                    ctx.queue.write_buffer(
-                        &self.bind_group_data.last().unwrap().buffers[0],
-                        0,
-                        bytes,
-                    );
-                }
+                ctx.queue
+                    .write_buffer(&self.emulate_constants_buffer.render, 0, bytes);
             }
-            for (i, bind_group_data) in self.bind_group_data.iter().enumerate() {
-                rpass.set_bind_group(i as u32, &bind_group_data.bind_group, &[]);
+            for (i, bind_group) in self.bind_groups.iter().enumerate() {
+                rpass.set_bind_group(i as u32, bind_group, &[]);
             }
             rpass.draw(0..3, 0..1);
         }
@@ -286,9 +291,8 @@ impl RenderPass {
 
 fn create_pipeline_layouts(
     ctx: &GraphicsContext,
-    bind_group_layouts: &[wgpu::BindGroupLayout],
+    bind_group_layouts: &[&wgpu::BindGroupLayout],
 ) -> PipelineLayouts {
-    let bind_group_layouts = &bind_group_layouts.iter().collect::<Vec<_>>();
     let create = |push_constant_ranges| {
         ctx.device
             .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -380,162 +384,75 @@ fn create_pipelines(
     }
 }
 
-fn create_bind_group_layouts(
-    ctx: &GraphicsContext,
-    buffer_descriptors2: &[Vec<BufferDescriptor>],
-) -> Vec<wgpu::BindGroupLayout> {
-    let layouts = buffer_descriptors2
-        .iter()
-        .enumerate()
-        .map(|(layout_index, descriptors)| {
-            ctx.device
-                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                    entries: &descriptors
-                        .iter()
-                        .enumerate()
-                        .map(|(i, descriptor)| wgpu::BindGroupLayoutEntry {
-                            binding: i as u32,
-                            visibility: descriptor.shader_stages,
-                            ty: wgpu::BindingType::Buffer {
-                                ty: wgpu::BufferBindingType::Storage {
-                                    read_only: descriptor.read_only,
-                                },
-                                has_dynamic_offset: false,
-                                min_binding_size: None,
-                            },
-                            count: None,
-                        })
-                        .collect::<Vec<_>>(),
-                    label: Some(&format!("bind_group_layout {}", layout_index)),
-                })
-        });
-    #[cfg(feature = "emulate_constants")]
-    let layouts =
-        layouts.chain([ctx
-            .device
-            .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Storage { read_only: true },
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                    #[cfg(feature = "compute")]
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::COMPUTE,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Storage { read_only: true },
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                ],
-                label: Some("emulated push constants layout"),
-            })]);
-
-    layouts.collect()
-}
-
-fn create_bind_groups(
-    ctx: &GraphicsContext,
-    buffer_descriptors2: &[Vec<BufferDescriptor>],
-    bind_group_layouts: &[wgpu::BindGroupLayout],
-) -> (Vec<BindGroupData>, Vec<wgpu::Buffer>) {
-    let mut writable_buffers = vec![];
-    let bind_group_data = buffer_descriptors2
-        .iter()
-        .zip(bind_group_layouts)
-        .enumerate()
-        .map(|(layout_index, (descriptors, layout))| {
-            let buffers = descriptors
-                .iter()
-                .map(|descriptor| {
-                    let mut usage = wgpu::BufferUsages::STORAGE;
-                    if descriptor.cpu_writable {
-                        usage |= wgpu::BufferUsages::COPY_DST;
-                    }
-                    let buffer = ctx
-                        .device
-                        .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                            label: Some("Bind Group Buffer"),
-                            contents: descriptor.data,
-                            usage,
-                        });
-                    buffer
-                })
-                .collect::<Vec<_>>();
-            let bind_group_data = BindGroupData {
-                bind_group: ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                    layout,
-                    entries: &buffers
-                        .iter()
-                        .enumerate()
-                        .map(|(i, buffer)| wgpu::BindGroupEntry {
-                            binding: i as u32,
-                            resource: buffer.as_entire_binding(),
-                        })
-                        .collect::<Vec<_>>(),
-                    label: Some(&format!("bind_group {}", layout_index)),
-                }),
-                #[cfg(feature = "emulate_constants")]
-                buffers: vec![],
-            };
-            for (buffer, descriptor) in buffers.into_iter().zip(descriptors) {
-                if descriptor.cpu_writable {
-                    writable_buffers.push(buffer);
-                }
-            }
-            bind_group_data
-        });
-    #[cfg(feature = "emulate_constants")]
-    let bind_group_data = {
-        let usage = wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST;
-        bind_group_data.chain([{
-            let fragment_constants_buffer =
-                ctx.device
-                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: None,
-                        contents: &[0; 128],
-                        usage,
-                    });
+#[cfg(feature = "emulate_constants")]
+fn create_emulate_constants_bind_groups(
+    device: &wgpu::Device,
+) -> (
+    wgpu::BindGroupLayout,
+    wgpu::BindGroup,
+    EmulateConstantsBuffer,
+) {
+    let layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        entries: &[
+            wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            },
             #[cfg(feature = "compute")]
-            let compute_constants_buffer =
-                ctx.device
-                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: None,
-                        contents: &[0; 128],
-                        usage,
-                    });
-            BindGroupData {
-                bind_group: ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                    layout: &bind_group_layouts[bind_group_layouts.len() - 1],
-                    entries: &[
-                        wgpu::BindGroupEntry {
-                            binding: 0,
-                            resource: fragment_constants_buffer.as_entire_binding(),
-                        },
-                        #[cfg(feature = "compute")]
-                        wgpu::BindGroupEntry {
-                            binding: 1,
-                            resource: compute_constants_buffer.as_entire_binding(),
-                        },
-                    ],
-                    label: Some("emulated push constants bind group"),
-                }),
-                buffers: vec![
-                    fragment_constants_buffer,
-                    #[cfg(feature = "compute")]
-                    compute_constants_buffer,
-                ],
-            }
-        }])
-    };
-    (bind_group_data.collect(), writable_buffers)
+            wgpu::BindGroupLayoutEntry {
+                binding: 1,
+                visibility: wgpu::ShaderStages::COMPUTE,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            },
+        ],
+        label: Some("emulated push constants layout"),
+    });
+    let usage = wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST;
+    use wgpu::util::DeviceExt;
+    let fragment_constants_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: None,
+        contents: &[0; 128],
+        usage,
+    });
+    #[cfg(feature = "compute")]
+    let compute_constants_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: None,
+        contents: &[0; 128],
+        usage,
+    });
+    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        layout: &layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: fragment_constants_buffer.as_entire_binding(),
+            },
+            #[cfg(feature = "compute")]
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: compute_constants_buffer.as_entire_binding(),
+            },
+        ],
+        label: Some("emulated push constants bind group"),
+    });
+    (
+        layout,
+        bind_group,
+        EmulateConstantsBuffer {
+            render: fragment_constants_buffer,
+            #[cfg(feature = "compute")]
+            compute: compute_constants_buffer,
+        },
+    )
 }

@@ -1,5 +1,5 @@
 use crate::Options;
-use easy_shader_runner::{egui, wgpu, winit, BufferDescriptor, ControllerTrait, UiState};
+use easy_shader_runner::{egui, wgpu, winit, ControllerTrait, UiState};
 use glam::*;
 use shared::push_constants::shader::*;
 use shared::*;
@@ -167,18 +167,43 @@ impl ControllerTrait for Controller {
         }
     }
 
-    fn describe_buffers(&self) -> Vec<Vec<BufferDescriptor>> {
-        vec![vec![BufferDescriptor {
-            data: bytemuck::cast_slice(&self.cell_grid.buffer),
-            read_only: false,
-            shader_stages: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE,
-            cpu_writable: true,
-        }]]
-    }
+    fn describe_bind_groups(
+        &mut self,
+        device: &wgpu::Device,
+    ) -> (Vec<wgpu::BindGroupLayout>, Vec<wgpu::BindGroup>) {
+        let layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Storage { read_only: false },
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            }],
+            label: Some("cell_grid_layout"),
+        });
 
-    fn receive_buffers(&mut self, mut buffers: Vec<wgpu::Buffer>) {
-        debug_assert!(buffers.len() == 1);
-        self.buffer = Some(buffers.swap_remove(0));
+        use wgpu::util::DeviceExt;
+        let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("cell_grid_buffer"),
+            contents: bytemuck::cast_slice(&self.cell_grid.buffer),
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+        });
+
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: buffer.as_entire_binding(),
+            }],
+            label: Some("cell_grid_bind_group"),
+        });
+
+        self.buffer = Some(buffer);
+
+        (vec![layout], vec![bind_group])
     }
 
     fn ui(

@@ -25,7 +25,7 @@ cargo run
 ### Wasm
 ```bash
 cd wasm-app
-wasm-pack build ../example --out-dir ../../wasm-app/pkg --dev
 npm install
+npm run wasm-pack-dev
 npm run dev
 ```
