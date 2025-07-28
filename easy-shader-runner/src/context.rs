@@ -1,3 +1,4 @@
+use crate::controller::ControllerTrait;
 use egui_winit::winit::{dpi::PhysicalSize, window::Window};
 use std::sync::Arc;
 
@@ -9,13 +10,12 @@ pub struct GraphicsContext {
 }
 
 impl GraphicsContext {
-    pub async fn new(window: Arc<Window>, initial_size: PhysicalSize<u32>) -> GraphicsContext {
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::util::backend_bits_from_env().unwrap_or(wgpu::Backends::PRIMARY),
-            flags: wgpu::InstanceFlags::default().with_env(),
-            dx12_shader_compiler: wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default(),
-            gles_minor_version: wgpu::Gles3MinorVersion::Automatic,
-        });
+    pub async fn new<C: ControllerTrait>(
+        window: Arc<Window>,
+        initial_size: PhysicalSize<u32>,
+        controller: &C,
+    ) -> GraphicsContext {
+        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::from_env_or_default());
 
         #[cfg(target_arch = "wasm32")]
         let canvas = {
@@ -48,28 +48,26 @@ impl GraphicsContext {
             .await
             .unwrap();
 
+        let (features, limits) =
+            controller.describe_wgpu_features_and_limits(adapter.features(), adapter.limits());
         let (features, limits) = if cfg!(feature = "emulate_constants") {
-            Default::default()
+            (features, limits)
         } else {
             (
-                wgpu::Features::PUSH_CONSTANTS,
+                features | wgpu::Features::PUSH_CONSTANTS,
                 wgpu::Limits {
-                    max_push_constant_size: 128,
-                    ..Default::default()
+                    max_push_constant_size: limits.max_push_constant_size.max(128),
+                    ..limits
                 },
             )
         };
 
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    required_features: features,
-                    required_limits: limits,
-                    memory_hints: Default::default(),
-                },
-                None,
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                required_features: features,
+                required_limits: limits,
+                ..Default::default()
+            })
             .await
             .expect("Failed to create device");
 

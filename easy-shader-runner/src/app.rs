@@ -262,14 +262,14 @@ async fn create_graphics<C: ControllerTrait>(
     initial_size: PhysicalSize<u32>,
     window: Window,
 ) {
+    let mut controller = builder.controller;
     let window = Arc::new(window);
-    let ctx = GraphicsContext::new(window.clone(), initial_size).await;
+    let ctx = GraphicsContext::new(window.clone(), initial_size, &controller).await;
 
     let ui = Ui::new(window.clone());
 
     let ui_state = UiState::new();
 
-    let mut controller = builder.controller;
     let rpass = RenderPass::new(&ctx, &builder.shader_bytes, &mut controller);
 
     let gfx = Graphics {

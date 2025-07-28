@@ -36,6 +36,14 @@ pub trait ControllerTrait: 'static {
         (vec![], vec![])
     }
 
+    fn describe_wgpu_features_and_limits(
+        &self,
+        _supported_features: wgpu::Features,
+        _supported_limits: wgpu::Limits,
+    ) -> (wgpu::Features, wgpu::Limits) {
+        (wgpu::Features::default(), wgpu::Limits::default())
+    }
+
     fn ui(
         &mut self,
         _ctx: &egui::Context,
