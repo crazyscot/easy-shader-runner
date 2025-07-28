@@ -33,7 +33,7 @@ egui-wgpu = "0.30.0"
 wgpu = { version = "23.0.1", default-features = false, features = ["spirv"] }
 futures = { version = "0.3", default-features = false, features = ["executor"] }
 egui-winit = { version = "0.30.0" }
-env_logger = "0.10.0"
+env_logger = "0.11.8"
 spirv-builder = { workspace = true, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
