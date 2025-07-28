@@ -23,8 +23,6 @@ mod shader;
 mod ui;
 mod user_event;
 
-const TITLE: &str = "runner";
-
 #[cfg(all(
     any(feature = "runtime-compilation", feature = "hot-reload-shader"),
     not(target_arch = "wasm32")
@@ -32,6 +30,7 @@ const TITLE: &str = "runner";
 pub fn run_with_runtime_compilation<C: ControllerTrait + Send>(
     controller: C,
     shader_crate_path: impl AsRef<std::path::Path>,
+    title: impl Into<String>,
 ) {
     setup_logging();
     let event_loop = EventLoop::with_user_event().build().unwrap();
@@ -42,21 +41,31 @@ pub fn run_with_runtime_compilation<C: ControllerTrait + Send>(
         shader_crate_path,
     );
     let shader_bytes = std::fs::read(shader_path).unwrap();
-    start(event_loop, controller, shader_bytes)
+    start(event_loop, controller, shader_bytes, title.into())
 }
 
-pub fn run_with_prebuilt_shader<C: ControllerTrait>(controller: C, shader_bytes: &'static [u8]) {
+pub fn run_with_prebuilt_shader<C: ControllerTrait>(
+    controller: C,
+    shader_bytes: &'static [u8],
+    title: impl Into<String>,
+) {
     setup_logging();
     let event_loop = EventLoop::with_user_event().build().unwrap();
-    start(event_loop, controller, shader_bytes);
+    start(event_loop, controller, shader_bytes, title.into());
 }
 
 fn start<C: ControllerTrait>(
     event_loop: EventLoop<CustomEvent<C>>,
     controller: C,
     shader_bytes: impl Into<Cow<'static, [u8]>>,
+    title: String,
 ) {
-    let mut app = app::App::new(event_loop.create_proxy(), shader_bytes.into(), controller);
+    let mut app = app::App::new(
+        event_loop.create_proxy(),
+        shader_bytes.into(),
+        controller,
+        title,
+    );
     event_loop.run_app(&mut app).unwrap()
 }
 

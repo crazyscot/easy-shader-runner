@@ -31,6 +31,7 @@ pub struct Builder<C: ControllerTrait> {
     event_proxy: EventLoopProxy<CustomEvent<C>>,
     shader_bytes: Cow<'static, [u8]>,
     controller: C,
+    title: String,
 }
 
 pub enum App<C: ControllerTrait> {
@@ -44,11 +45,13 @@ impl<'a, C: ControllerTrait> App<C> {
         event_proxy: EventLoopProxy<CustomEvent<C>>,
         shader_bytes: Cow<'static, [u8]>,
         controller: C,
+        title: String,
     ) -> Self {
         Self::Builder(Builder {
             event_proxy,
             shader_bytes,
             controller,
+            title,
         })
     }
 
@@ -165,14 +168,14 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
                 None,
             ),
         ) {
-            let window_attributes = Window::default_attributes().with_title(crate::TITLE);
+            let window_attributes = Window::default_attributes().with_title(builder.title.clone());
             let window_attributes = {
                 cfg_if::cfg_if! {
                     if #[cfg(target_arch = "wasm32")] {
                         use egui_winit::winit::platform::web::WindowAttributesExtWebSys;
                         window_attributes.with_append(true)
                     } else {
-                        window_attributes.with_name(crate::TITLE, "")
+                        window_attributes.with_name(builder.title.clone(), "")
                     }
                 }
             };
