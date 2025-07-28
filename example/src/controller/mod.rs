@@ -1,5 +1,5 @@
 use crate::Options;
-use easy_shader_runner::{egui, wgpu, winit, ControllerTrait, UiState};
+use easy_shader_runner::{ControllerTrait, UiState, egui, wgpu, winit};
 use glam::*;
 use shared::push_constants::shader::*;
 use shared::*;
@@ -30,7 +30,6 @@ pub struct Controller {
     size: UVec2,
     start: Instant,
     cursor: Vec2,
-    prev_cursor: Vec2,
     mouse_button_pressed: u32,
     camera: Camera,
     debug: bool,
@@ -66,7 +65,6 @@ impl Controller {
             size: UVec2::ZERO,
             start: now,
             cursor: Vec2::ZERO,
-            prev_cursor: Vec2::ZERO,
             mouse_button_pressed: 0,
             camera: Default::default(),
             debug: options.debug,
@@ -138,12 +136,10 @@ impl ControllerTrait for Controller {
             time: self.start.elapsed().as_secs_f32(),
             mouse_button_pressed: self.mouse_button_pressed,
             cursor: self.cursor,
-            prev_cursor: self.prev_cursor,
             camera_translate: self.camera.translate,
             camera_zoom: self.camera.zoom,
             debug: self.debug.into(),
         };
-        self.prev_cursor = self.cursor;
         fragment_constants
     }
 

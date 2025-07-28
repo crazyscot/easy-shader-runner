@@ -7,7 +7,8 @@ use glam::*;
 
 pub const DIM: UVec2 = UVec2::splat(192);
 
-#[derive(Clone, Copy, Default, bytemuck::NoUninit)]
+#[derive(Clone, Copy, Default)]
+#[cfg_attr(not(target_arch = "spirv"), derive(bytemuck::NoUninit))]
 #[repr(u32)]
 pub enum CellState {
     #[default]
