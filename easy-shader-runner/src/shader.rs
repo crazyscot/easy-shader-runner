@@ -16,11 +16,13 @@ pub fn compile_shader<#[cfg(feature = "hot-reload-shader")] C: ControllerTrait +
     // rustc_codegen_spirv normally, so we *want* to build into a separate target directory, to
     // not have to rebuild half the crate graph every time we run. So, pretend we're running
     // under cargo by setting these environment variables.
-    std::env::set_var(
-        "OUT_DIR",
-        option_env!("SHADERS_TARGET_DIR").unwrap_or(env!("OUT_DIR")),
-    );
-    std::env::set_var("PROFILE", env!("PROFILE"));
+    unsafe {
+        std::env::set_var(
+            "OUT_DIR",
+            option_env!("SHADERS_TARGET_DIR").unwrap_or(env!("OUT_DIR")),
+        );
+        std::env::set_var("PROFILE", env!("PROFILE"));
+    }
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
     let crate_path = [Path::new(&manifest_dir), relative_crate_path.as_ref()]
         .iter()
@@ -47,11 +49,13 @@ pub fn compile_shader<#[cfg(feature = "hot-reload-shader")] C: ControllerTrait +
             if let Some(first) = first {
                 first.submit(compile_result);
             } else {
-                std::assert!(event_proxy
-                    .send_event(CustomEvent::NewModule(handle_compile_result(
-                        compile_result
-                    )))
-                    .is_ok())
+                std::assert!(
+                    event_proxy
+                        .send_event(CustomEvent::NewModule(handle_compile_result(
+                            compile_result
+                        )))
+                        .is_ok()
+                )
             }
         })
         .expect("Configuration is correct for watching")

@@ -2,9 +2,9 @@ use egui_winit::winit::event_loop::EventLoop;
 use std::borrow::Cow;
 use user_event::CustomEvent;
 
+pub use context::GraphicsContext;
 pub use controller::ControllerTrait;
 pub use ui::UiState;
-pub use context::GraphicsContext;
 
 pub use egui_wgpu::wgpu;
 pub use egui_winit::egui;
@@ -72,7 +72,9 @@ fn setup_logging() {
                     rust_log += &format!(",{loud_crate}=warn");
                 }
             }
-            std::env::set_var("RUST_LOG", rust_log);
+            unsafe {
+                std::env::set_var("RUST_LOG", rust_log);
+            }
             let _ = env_logger::try_init();
         }
     }
