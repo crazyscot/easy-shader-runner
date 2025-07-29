@@ -15,7 +15,14 @@ impl GraphicsContext {
         initial_size: PhysicalSize<u32>,
         controller: &C,
     ) -> GraphicsContext {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::from_env_or_default());
+        let instance = wgpu::Instance::new(
+            &wgpu::InstanceDescriptor {
+                backends: wgpu::Backends::PRIMARY,
+                flags: wgpu::InstanceFlags::default(),
+                backend_options: wgpu::BackendOptions::default(),
+            }
+            .with_env(),
+        );
 
         #[cfg(target_arch = "wasm32")]
         let canvas = {

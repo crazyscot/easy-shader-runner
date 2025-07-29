@@ -30,16 +30,24 @@ egui = "0.32.0"
 egui-wgpu = "0.32.0"
 
 [target.'cfg(not(any(target_arch = "wasm32")))'.dependencies]
-wgpu = { version = "25.0.2", features = ["spirv"] }
+wgpu = { version = "25.0.2", default-features = false, features = [
+  "spirv",
+  "vulkan",
+  "dx12",
+  "metal",
+] }
 futures = { version = "0.3", default-features = false, features = ["executor"] }
 egui-winit = { version = "0.32.0" }
 env_logger = "0.11.8"
 spirv-builder = { workspace = true, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wgpu = { version = "25.0.2", features = ["spirv"] }
+wgpu = { version = "25.0.2", default-features = false, features = [
+  "spirv",
+  "webgpu",
+] }
 egui-winit = { version = "0.32.0", default-features = false }
-winit = "0.30.0"
+winit = { version = "0.30.0", default-features = false, features = ["rwh_06"] }
 web-sys = "0.3.77"
 console_error_panic_hook = "0.1.7"
 console_log = "1.0.0"
