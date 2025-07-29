@@ -1,8 +1,10 @@
-use egui_winit::winit::event::{ElementState, KeyEvent, MouseButton};
+use egui_winit::winit::event::{ElementState, KeyEvent, MouseButton, TouchPhase};
 use glam::*;
 
 pub trait ControllerTrait: 'static {
     fn resize(&mut self, _size: UVec2);
+
+    fn touch(&mut self, _id: u64, _phase: TouchPhase, _position: DVec2) {}
 
     fn mouse_move(&mut self, _position: DVec2) {}
 

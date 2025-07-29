@@ -10,7 +10,7 @@ use egui_winit::winit::platform::wayland::*;
 use egui_winit::winit::{
     application::ApplicationHandler,
     dpi::{PhysicalPosition, PhysicalSize},
-    event::{ElementState, KeyEvent, MouseButton, MouseScrollDelta, WindowEvent},
+    event::{ElementState, KeyEvent, MouseButton, MouseScrollDelta, TouchPhase, WindowEvent},
     event_loop::{ActiveEventLoop, EventLoopProxy},
     keyboard::{Key, NamedKey},
     window::{Window, WindowId},
@@ -82,6 +82,14 @@ impl<'a, C: ControllerTrait> App<C> {
             return;
         };
         gfx.controller.mouse_input(state, button);
+    }
+
+    pub fn touch(&mut self, id: u64, phase: TouchPhase, location: PhysicalPosition<f64>) {
+        let Self::Graphics(gfx) = self else {
+            return;
+        };
+        gfx.controller
+            .touch(id, phase, glam::dvec2(location.x, location.y));
     }
 
     pub fn mouse_move(&mut self, position: PhysicalPosition<f64>) {
@@ -234,6 +242,7 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
             WindowEvent::KeyboardInput { event, .. } => self.keyboard_input(event),
             WindowEvent::Resized(size) => self.resize(size),
             WindowEvent::MouseInput { state, button, .. } => self.mouse_input(state, button),
+            WindowEvent::Touch(touch) => self.touch(touch.id, touch.phase, touch.location),
             WindowEvent::MouseWheel { delta, .. } => self.mouse_scroll(delta),
             WindowEvent::CursorMoved { position, .. } => self.mouse_move(position),
             _ => {}
