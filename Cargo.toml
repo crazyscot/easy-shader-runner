@@ -20,11 +20,11 @@ glam = { version = "0.30.5", default-features = false }
 
 [workspace.dependencies.spirv-std]
 git = "https://github.com/Rust-GPU/rust-gpu"
-rev = "87ea628070561f576aeef84c92a0e3e3c25d63ff"
+rev = "df1628a032d22c864397417c2871b74d602af986"
 
 [workspace.dependencies.spirv-builder]
 git = "https://github.com/Rust-GPU/rust-gpu"
-rev = "87ea628070561f576aeef84c92a0e3e3c25d63ff"
+rev = "df1628a032d22c864397417c2871b74d602af986"
 
 [profile.dev]
 package.spirv-tools-sys.opt-level = 1
