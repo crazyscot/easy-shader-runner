@@ -33,6 +33,7 @@ pub trait ControllerTrait: 'static {
 
     fn describe_bind_groups(
         &mut self,
+        _queue: &wgpu::Queue,
         _device: &wgpu::Device,
     ) -> (Vec<wgpu::BindGroupLayout>, Vec<wgpu::BindGroup>) {
         (vec![], vec![])

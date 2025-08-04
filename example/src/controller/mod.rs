@@ -165,6 +165,7 @@ impl ControllerTrait for Controller {
 
     fn describe_bind_groups(
         &mut self,
+        _queue: &wgpu::Queue,
         device: &wgpu::Device,
     ) -> (Vec<wgpu::BindGroupLayout>, Vec<wgpu::BindGroup>) {
         let layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {

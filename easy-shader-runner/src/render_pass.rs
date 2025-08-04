@@ -41,7 +41,7 @@ impl RenderPass {
         shader_bytes: &[u8],
         controller: &mut C,
     ) -> Self {
-        let (layouts, bind_groups) = controller.describe_bind_groups(&ctx.device);
+        let (layouts, bind_groups) = controller.describe_bind_groups(&ctx.queue, &ctx.device);
         let bind_group_layouts = layouts.iter();
 
         #[cfg(feature = "emulate_constants")]
