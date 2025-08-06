@@ -49,7 +49,7 @@
           vulkan-tools
           wayland
           libxkbcommon
-          libgcc.lib
+          stdenv.cc.cc.lib
         ];
         shadersCompilePath = "$HOME/.cache/rust-gpu-shaders";
         rustPackage = rustPlatform.buildRustPackage {
@@ -58,7 +58,7 @@
           src = ./.;
           cargoLock.lockFile = ./Cargo.lock;
           cargoLock.outputHashes = {
-            "rustc_codegen_spirv-0.9.0" = "sha256-SXei4lpLtzK9Qcin+twgecLg58W7m50o4sPjsgZq4L8=";
+            "rustc_codegen_spirv-0.9.0" = "sha256-AFt3Nc+NqK8DxNUhDBcOUmk3XDVcoToVeFIMYNszdbY=";
           };
           buildNoDefaultFeatures = true;
           buildFeatures = ["runtime-compilation"];
