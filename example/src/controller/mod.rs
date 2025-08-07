@@ -1,5 +1,5 @@
 use crate::Options;
-use easy_shader_runner::{ControllerTrait, UiState, egui, wgpu, winit};
+use easy_shader_runner::{ControllerTrait, GraphicsContext, UiState, egui, wgpu, winit};
 use glam::*;
 use shared::push_constants::shader::*;
 use shared::*;
@@ -129,7 +129,11 @@ impl ControllerTrait for Controller {
         }
     }
 
-    fn prepare_render(&mut self, offset: Vec2) -> impl bytemuck::NoUninit {
+    fn prepare_render(
+        &mut self,
+        _gfx_ctx: &GraphicsContext,
+        offset: Vec2,
+    ) -> impl bytemuck::NoUninit {
         let fragment_constants = FragmentConstants {
             size: self.size.into(),
             translate: offset,
@@ -143,7 +147,12 @@ impl ControllerTrait for Controller {
         fragment_constants
     }
 
-    fn update<F: Fn(UVec3, UVec3, &[u8])>(&mut self, compute: F, allowed_duration: f32) {
+    fn update<F: Fn(UVec3, UVec3, &[u8])>(
+        &mut self,
+        _gfx_ctx: &GraphicsContext,
+        compute: F,
+        allowed_duration: f32,
+    ) {
         let start = web_time::Instant::now();
         for _ in 0..self.simulation_runner.iterations() {
             compute(
@@ -165,50 +174,50 @@ impl ControllerTrait for Controller {
 
     fn describe_bind_groups(
         &mut self,
-        _queue: &wgpu::Queue,
-        device: &wgpu::Device,
+        gfx_ctx: &GraphicsContext,
     ) -> (Vec<wgpu::BindGroupLayout>, Vec<wgpu::BindGroup>) {
-        let layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: false },
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-            label: Some("cell_grid_layout"),
-        });
+        let layout = gfx_ctx
+            .device
+            .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT | wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+                label: Some("cell_grid_layout"),
+            });
 
         use wgpu::util::DeviceExt;
-        let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("cell_grid_buffer"),
-            contents: bytemuck::cast_slice(&self.cell_grid.buffer),
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-        });
+        let buffer = gfx_ctx
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("cell_grid_buffer"),
+                contents: bytemuck::cast_slice(&self.cell_grid.buffer),
+                usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            });
 
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: buffer.as_entire_binding(),
-            }],
-            label: Some("cell_grid_bind_group"),
-        });
+        let bind_group = gfx_ctx
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &layout,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: buffer.as_entire_binding(),
+                }],
+                label: Some("cell_grid_bind_group"),
+            });
 
         self.buffer = Some(buffer);
 
         (vec![layout], vec![bind_group])
     }
 
-    fn ui(
-        &mut self,
-        ctx: &egui::Context,
-        _ui_state: &mut UiState,
-        graphics_context: &easy_shader_runner::GraphicsContext,
-    ) {
+    fn ui(&mut self, ctx: &egui::Context, _ui_state: &mut UiState, gfx_ctx: &GraphicsContext) {
         egui::Window::new("Options")
             .resizable(false)
             .show(ctx, |ui| {
@@ -221,7 +230,7 @@ impl ControllerTrait for Controller {
                 ui.checkbox(&mut self.simulation_runner.paused, "Paused");
                 ui.checkbox(&mut self.debug, "Debug");
                 if ui.button("Reset").clicked() {
-                    graphics_context.queue.write_buffer(
+                    gfx_ctx.queue.write_buffer(
                         self.buffer.as_ref().unwrap(),
                         0,
                         bytemuck::cast_slice(&self.cell_grid.buffer),

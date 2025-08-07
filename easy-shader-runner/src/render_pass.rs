@@ -41,7 +41,7 @@ impl RenderPass {
         shader_bytes: &[u8],
         controller: &mut C,
     ) -> Self {
-        let (layouts, bind_groups) = controller.describe_bind_groups(&ctx.queue, &ctx.device);
+        let (layouts, bind_groups) = controller.describe_bind_groups(&ctx);
         let bind_group_layouts = layouts.iter();
 
         #[cfg(feature = "emulate_constants")]
@@ -182,7 +182,7 @@ impl RenderPass {
 
             rpass.set_pipeline(&self.pipelines.render);
             {
-                let push_constants = controller.prepare_render(offset);
+                let push_constants = controller.prepare_render(ctx, offset);
                 let bytes = bytemuck::bytes_of(&push_constants);
                 #[cfg(not(feature = "emulate_constants"))]
                 rpass.set_push_constants(wgpu::ShaderStages::FRAGMENT, 0, bytes);

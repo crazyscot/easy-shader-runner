@@ -1,3 +1,4 @@
+use crate::GraphicsContext;
 use egui_winit::winit::event::{ElementState, KeyEvent, MouseButton, TouchPhase};
 use glam::*;
 
@@ -14,7 +15,11 @@ pub trait ControllerTrait: 'static {
 
     fn keyboard_input(&mut self, _key: KeyEvent) {}
 
-    fn prepare_render(&mut self, offset: Vec2) -> impl bytemuck::NoUninit;
+    fn prepare_render(
+        &mut self,
+        gfx_ctx: &GraphicsContext,
+        offset: Vec2,
+    ) -> impl bytemuck::NoUninit;
 
     /// Run the compute shader after rendering
     #[cfg(feature = "compute")]
@@ -26,6 +31,7 @@ pub trait ControllerTrait: 'static {
         ),
     >(
         &mut self,
+        _gfx_ctx: &GraphicsContext,
         _compute: F,
         _allowed_duration: f32,
     ) {
@@ -33,8 +39,7 @@ pub trait ControllerTrait: 'static {
 
     fn describe_bind_groups(
         &mut self,
-        _queue: &wgpu::Queue,
-        _device: &wgpu::Device,
+        _gfx_ctx: &GraphicsContext,
     ) -> (Vec<wgpu::BindGroupLayout>, Vec<wgpu::BindGroup>) {
         (vec![], vec![])
     }
@@ -51,7 +56,7 @@ pub trait ControllerTrait: 'static {
         &mut self,
         _ctx: &egui::Context,
         _ui_state: &mut crate::ui::UiState,
-        _graphics_context: &crate::GraphicsContext,
+        _gfx_ctx: &GraphicsContext,
     ) {
     }
 }
