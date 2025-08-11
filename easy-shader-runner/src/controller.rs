@@ -60,5 +60,6 @@ pub trait ControllerTrait: 'static {
     ) {
     }
 
+    #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
     fn new_shader_module(&mut self) {}
 }
