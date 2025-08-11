@@ -164,6 +164,7 @@ impl<'a, C: ControllerTrait> App<C> {
             return;
         };
         gfx.rpass.new_module(&gfx.ctx, shader_path);
+        gfx.controller.new_shader_module();
         gfx.window.request_redraw();
     }
 }

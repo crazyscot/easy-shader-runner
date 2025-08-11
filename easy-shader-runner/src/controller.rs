@@ -59,4 +59,6 @@ pub trait ControllerTrait: 'static {
         _gfx_ctx: &GraphicsContext,
     ) {
     }
+
+    fn new_shader_module(&mut self) {}
 }
