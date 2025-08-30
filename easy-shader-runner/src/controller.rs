@@ -44,6 +44,21 @@ pub trait ControllerTrait: 'static {
         (vec![], vec![])
     }
 
+    fn describe_vertex_buffer_layouts(
+        &mut self,
+        _gfx_ctx: &GraphicsContext,
+    ) -> Vec<wgpu::VertexBufferLayout<'static>> {
+        vec![]
+    }
+
+    /// Called every frame.
+    /// return Vertex buffer and number of vertices as well as Index buffer and number of indices
+    fn get_vertex_index_buffer(
+        &self,
+    ) -> (Option<(&wgpu::Buffer, u32)>, Option<(&wgpu::Buffer, u32)>) {
+        (None, None)
+    }
+
     fn describe_wgpu_features_and_limits(
         &self,
         _supported_features: wgpu::Features,

@@ -33,6 +33,7 @@ pub struct RenderPass {
     shader_viewport: egui::Rect,
     #[cfg(feature = "emulate_constants")]
     emulate_constants_buffer: EmulateConstantsBuffer,
+    vertex_buffer_layouts: Vec<wgpu::VertexBufferLayout<'static>>,
 }
 
 impl RenderPass {
@@ -55,12 +56,14 @@ impl RenderPass {
             .chain([emulate_constants_bind_group])
             .collect::<Vec<_>>();
 
+        let vertex_buffer_layouts = controller.describe_vertex_buffer_layouts(&ctx);
         let pipeline_layouts =
             create_pipeline_layouts(ctx, &bind_group_layouts.collect::<Vec<_>>());
         let pipelines = create_pipelines(
             &ctx.device,
             &pipeline_layouts,
             ctx.config.format,
+            &vertex_buffer_layouts,
             shader_bytes,
         );
 
@@ -75,6 +78,7 @@ impl RenderPass {
             shader_viewport: egui::Rect::NAN,
             #[cfg(feature = "emulate_constants")]
             emulate_constants_buffer,
+            vertex_buffer_layouts,
         }
     }
 
@@ -193,7 +197,18 @@ impl RenderPass {
             for (i, bind_group) in self.bind_groups.iter().enumerate() {
                 rpass.set_bind_group(i as u32, bind_group, &[]);
             }
-            rpass.draw(0..3, 0..1);
+            let (vertices, indices) = controller.get_vertex_index_buffer();
+            if let Some((vertex_buffer, num_vertices)) = vertices {
+                rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                if let Some((index_buffer, num_indices)) = indices {
+                    rpass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                    rpass.draw_indexed(0..num_indices, 0, 0..1);
+                } else {
+                    rpass.draw(0..num_vertices, 0..1);
+                }
+            } else {
+                rpass.draw(0..3, 0..1);
+            }
         }
 
         ctx.queue.submit(Some(encoder.finish()));
@@ -280,6 +295,7 @@ impl RenderPass {
             &ctx.device,
             &self.pipeline_layouts,
             ctx.config.format,
+            &self.vertex_buffer_layouts,
             &std::fs::read(shader_path).unwrap(),
         );
     }
@@ -324,6 +340,7 @@ fn create_pipelines(
     device: &wgpu::Device,
     pipeline_layouts: &PipelineLayouts,
     surface_format: wgpu::TextureFormat,
+    vertex_buffer_layouts: &[wgpu::VertexBufferLayout],
     shader_bytes: &[u8],
 ) -> Pipelines {
     let spirv = wgpu::util::make_spirv(shader_bytes);
@@ -337,7 +354,7 @@ fn create_pipelines(
         vertex: wgpu::VertexState {
             module,
             entry_point: Some("main_vs"),
-            buffers: &[],
+            buffers: vertex_buffer_layouts,
             compilation_options: Default::default(),
         },
         primitive: wgpu::PrimitiveState {
