@@ -33,6 +33,7 @@ pub struct RenderPass {
     shader_viewport: egui::Rect,
     #[cfg(feature = "emulate_constants")]
     emulate_constants_buffer: EmulateConstantsBuffer,
+    #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
     vertex_buffer_layouts: Vec<wgpu::VertexBufferLayout<'static>>,
 }
 
@@ -87,6 +88,7 @@ impl RenderPass {
             shader_viewport: egui::Rect::NAN,
             #[cfg(feature = "emulate_constants")]
             emulate_constants_buffer,
+            #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
             vertex_buffer_layouts,
         }
     }
