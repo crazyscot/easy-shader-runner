@@ -69,7 +69,7 @@ fn start<C: ControllerTrait>(
     event_loop.run_app(&mut app).unwrap()
 }
 
-fn setup_logging() {
+pub fn setup_logging() {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
