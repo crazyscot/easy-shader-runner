@@ -67,7 +67,14 @@ impl RenderPass {
             shader_bytes,
         );
 
-        let ui_renderer = egui_wgpu::Renderer::new(&ctx.device, ctx.config.format, None, 1, false);
+        let ui_renderer = egui_wgpu::Renderer::new(&ctx.device, ctx.config.format,
+            egui_wgpu::RendererOptions {
+                msaa_samples: 1,
+                depth_stencil_format: None,
+                dithering: false,
+                predictable_texture_filtering: false
+            }
+        );
 
         Self {
             pipelines,
@@ -167,6 +174,7 @@ impl RenderPass {
                 timestamp_writes: None,
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: output_view,
+                    depth_slice: None,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
@@ -266,6 +274,7 @@ impl RenderPass {
                 timestamp_writes: None,
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: output_view,
+                    depth_slice: None,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Load,

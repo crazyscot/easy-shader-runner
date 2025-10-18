@@ -19,6 +19,7 @@ impl GraphicsContext {
             &wgpu::InstanceDescriptor {
                 backends: wgpu::Backends::PRIMARY,
                 flags: wgpu::InstanceFlags::default(),
+                memory_budget_thresholds: wgpu::MemoryBudgetThresholds::default(),
                 backend_options: wgpu::BackendOptions::default(),
             }
             .with_env(),
