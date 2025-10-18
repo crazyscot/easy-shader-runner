@@ -29,6 +29,12 @@ impl UiState {
     }
 }
 
+impl Default for UiState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct Ui {
     egui_winit_state: State,
     fps_counter: FpsCounter,

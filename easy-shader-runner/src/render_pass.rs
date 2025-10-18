@@ -42,7 +42,7 @@ impl RenderPass {
         shader_bytes: &[u8],
         controller: &mut C,
     ) -> Self {
-        let (layouts, bind_groups) = controller.describe_bind_groups(&ctx);
+        let (layouts, bind_groups) = controller.describe_bind_groups(ctx);
         let bind_group_layouts = layouts.iter();
 
         #[cfg(feature = "emulate_constants")]
@@ -56,7 +56,7 @@ impl RenderPass {
             .chain([emulate_constants_bind_group])
             .collect::<Vec<_>>();
 
-        let vertex_buffer_layouts = controller.describe_vertex_buffer_layouts(&ctx);
+        let vertex_buffer_layouts = controller.describe_vertex_buffer_layouts(ctx);
         let pipeline_layouts =
             create_pipeline_layouts(ctx, &bind_group_layouts.collect::<Vec<_>>());
         let pipelines = create_pipelines(

@@ -25,10 +25,8 @@ pub fn main_fs(
         * DIM.as_vec2())
     .as_uvec2();
 
-    if constants.mouse_button_pressed & 1 == 1 {
-        if constants.cursor.distance_squared(coord) < 0.5 {
-            cell_grid.set(i, CellState::On);
-        }
+    if constants.mouse_button_pressed & 1 == 1 && constants.cursor.distance_squared(coord) < 0.5 {
+        cell_grid.set(i, CellState::On);
     }
 
     let col = match cell_grid.get(i) {
@@ -96,7 +94,7 @@ pub fn main_cs(
         }
     }
 
-    if matches!(val, CellState::On) && (count < 2 || count > 3) {
+    if matches!(val, CellState::On) && !(2..=3).contains(&count) {
         cell_grid.set(index, CellState::Dying);
     } else if matches!(val, CellState::Off) && count == 3 {
         cell_grid.set(index, CellState::Spawning);

@@ -90,8 +90,7 @@ impl GraphicsContext {
                 .get_default_config(adapter, size.width, size.height)
                 .unwrap_or_else(|| {
                     panic!(
-                        "Missing formats/present modes in surface capabilities: {:#?}",
-                        capabilities
+                        "Missing formats/present modes in surface capabilities: {capabilities:#?}"
                     )
                 });
             surface_config.present_mode = wgpu::PresentMode::AutoVsync;

@@ -134,7 +134,7 @@ impl ControllerTrait for Controller {
         _gfx_ctx: &GraphicsContext,
         offset: Vec2,
     ) -> impl bytemuck::NoUninit {
-        let fragment_constants = FragmentConstants {
+        FragmentConstants {
             size: self.size.into(),
             translate: offset,
             time: self.start.elapsed().as_secs_f32(),
@@ -143,8 +143,7 @@ impl ControllerTrait for Controller {
             camera_translate: self.camera.translate,
             camera_zoom: self.camera.zoom,
             debug: self.debug.into(),
-        };
-        fragment_constants
+        }
     }
 
     fn update<F: Fn(UVec3, UVec3, &[u8])>(
