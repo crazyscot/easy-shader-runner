@@ -67,13 +67,15 @@ impl RenderPass {
             shader_bytes,
         );
 
-        let ui_renderer = egui_wgpu::Renderer::new(&ctx.device, ctx.config.format,
+        let ui_renderer = egui_wgpu::Renderer::new(
+            &ctx.device,
+            ctx.config.format,
             egui_wgpu::RendererOptions {
                 msaa_samples: 1,
                 depth_stencil_format: None,
                 dithering: false,
-                predictable_texture_filtering: false
-            }
+                predictable_texture_filtering: false,
+            },
         );
 
         Self {

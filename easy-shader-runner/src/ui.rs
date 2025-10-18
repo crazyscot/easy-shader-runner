@@ -1,11 +1,11 @@
-use crate::{controller::ControllerTrait, fps_counter::FpsCounter, GraphicsContext};
+use crate::{GraphicsContext, controller::ControllerTrait, fps_counter::FpsCounter};
 use egui::{
-    epaint::{textures::TexturesDelta, ClippedPrimitive},
     Context,
+    epaint::{ClippedPrimitive, textures::TexturesDelta},
 };
 use egui_winit::{
-    winit::{event::WindowEvent, window::Window},
     State,
+    winit::{event::WindowEvent, window::Window},
 };
 use std::sync::Arc;
 
