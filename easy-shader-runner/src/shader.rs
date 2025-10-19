@@ -16,6 +16,7 @@ pub(crate) fn compile_shader<#[cfg(feature = "hot-reload-shader")] C: Controller
     #[cfg(feature = "hot-reload-shader")] event_proxy: EventLoopProxy<CustomEvent<C>>,
     crate_path: impl AsRef<Path>,
     relative_to_manifest: bool,
+    rustc_codegen_spirv_location: Option<PathBuf>,
 ) -> Result<PathBuf, ESRError> {
     // Hack: spirv_builder builds into a custom directory if running under cargo, to not
     // deadlock, and the default target directory if not. However, packages like `proc-macro2`
@@ -52,6 +53,11 @@ pub(crate) fn compile_shader<#[cfg(feature = "hot-reload-shader")] C: Controller
             "emulate_constants".into(),
         ])
         .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::SilentExit);
+    let builder = if let Some(p) = rustc_codegen_spirv_location {
+        builder.rustc_codegen_spirv_location(p)
+    } else {
+        builder
+    };
     fn handle_compile_result(compile_result: CompileResult) -> PathBuf {
         match compile_result.module {
             ModuleResult::SingleModule(result) => result,
