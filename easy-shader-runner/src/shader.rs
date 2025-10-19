@@ -6,9 +6,14 @@ use {
     egui_winit::winit::event_loop::EventLoopProxy,
 };
 
-pub fn compile_shader<#[cfg(feature = "hot-reload-shader")] C: ControllerTrait + Send>(
+/// Compile the shader with a standard path (absolute, or relative to the current working directory)
+///
+/// If `relative_to_manifest` is true, `shader_crate_path` is relative to CARGO_MANIFEST_DIR.
+/// If not, it is a standard path (may be absolute or relative).
+pub(crate) fn compile_shader<#[cfg(feature = "hot-reload-shader")] C: ControllerTrait + Send>(
     #[cfg(feature = "hot-reload-shader")] event_proxy: EventLoopProxy<CustomEvent<C>>,
-    relative_crate_path: impl AsRef<Path>,
+    crate_path: impl AsRef<Path>,
+    relative_to_manifest: bool,
 ) -> PathBuf {
     // Hack: spirv_builder builds into a custom directory if running under cargo, to not
     // deadlock, and the default target directory if not. However, packages like `proc-macro2`
@@ -23,10 +28,24 @@ pub fn compile_shader<#[cfg(feature = "hot-reload-shader")] C: ControllerTrait +
         );
         std::env::set_var("PROFILE", env!("PROFILE"));
     }
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    let crate_path = [Path::new(&manifest_dir), relative_crate_path.as_ref()]
-        .iter()
-        .collect::<PathBuf>();
+
+    let crate_path = if relative_to_manifest {
+        let manifest_dir = match std::env::var("CARGO_MANIFEST_DIR") {
+            Ok(v) => v,
+            Err(e) => panic!("missing CARGO_MANIFEST_DIR: {e}"),
+        };
+        let buf = [Path::new(&manifest_dir), crate_path.as_ref()]
+            .iter()
+            .collect::<PathBuf>();
+        match std::fs::exists(&buf) {
+            Err(_) | Ok(false) => panic!("Could not determine crate path (tried: {buf:?})"),
+            Ok(true) => (),
+        }
+        // It's a PathBuf
+        &buf.to_owned()
+    } else {
+        crate_path.as_ref()
+    };
 
     let builder = SpirvBuilder::new(crate_path, "spirv-unknown-vulkan1.1")
         .print_metadata(MetadataPrintout::None)

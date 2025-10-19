@@ -23,14 +23,36 @@ mod shader;
 mod ui;
 mod user_event;
 
+/// Run with runtime compilation
+///
+/// `shader_crate_path` is relative to CARGO_MANIFEST_DIR
 #[cfg(all(
     any(feature = "runtime-compilation", feature = "hot-reload-shader"),
     not(target_arch = "wasm32")
 ))]
 pub fn run_with_runtime_compilation<C: ControllerTrait + Send>(
     controller: C,
+    // Path of shader crate, relative to CARGO_MANIFEST_DIR
     shader_crate_path: impl AsRef<std::path::Path>,
     title: impl Into<String>,
+) {
+    run_with_runtime_compilation_2(controller, shader_crate_path, title, true);
+}
+
+/// Run with runtime compilation
+///
+/// If `relative_to_manifest` is true, `shader_crate_path` is relative to CARGO_MANIFEST_DIR.
+/// If not, it is a standard path (may be absolute or relative).
+#[cfg(all(
+    any(feature = "runtime-compilation", feature = "hot-reload-shader"),
+    not(target_arch = "wasm32")
+))]
+pub fn run_with_runtime_compilation_2<C: ControllerTrait + Send>(
+    controller: C,
+    // Path of shader crate, relative to CARGO_MANIFEST_DIR
+    shader_crate_path: impl AsRef<std::path::Path>,
+    title: impl Into<String>,
+    relative_to_manifest: bool,
 ) {
     setup_logging();
     let event_loop = EventLoop::with_user_event().build().unwrap();
@@ -39,6 +61,7 @@ pub fn run_with_runtime_compilation<C: ControllerTrait + Send>(
         #[cfg(feature = "hot-reload-shader")]
         event_loop.create_proxy(),
         shader_crate_path,
+        relative_to_manifest,
     );
     let shader_bytes = std::fs::read(shader_path).unwrap();
     start(event_loop, controller, shader_bytes, title.into())
