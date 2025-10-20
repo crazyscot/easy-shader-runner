@@ -13,7 +13,7 @@ use egui_winit::winit::{
     event::{ElementState, KeyEvent, MouseButton, MouseScrollDelta, TouchPhase, WindowEvent},
     event_loop::{ActiveEventLoop, EventLoopProxy},
     keyboard::{Key, NamedKey},
-    window::{Window, WindowId},
+    window::{Window, WindowId, Fullscreen},
 };
 use std::borrow::Cow;
 use std::sync::Arc;
@@ -148,6 +148,21 @@ impl<C: ControllerTrait> App<C> {
         );
         #[cfg(not(target_arch = "wasm32"))]
         gfx.ctx.set_vsync(gfx.ui_state.vsync);
+
+        if gfx.ui_state.fullscreen != gfx.ui_state.fullscreen_set {
+            let desired = if gfx.ui_state.fullscreen {
+                // untested, but Borderless(None) seems to be the preferred way to do this on macOS
+                Some(Fullscreen::Borderless(None))
+            } else {
+                None
+            };
+            if desired == gfx.window.fullscreen() {
+                gfx.window.set_fullscreen(desired);
+            }
+            gfx.window.set_maximized(gfx.ui_state.fullscreen);
+            gfx.window.set_decorations(!gfx.ui_state.fullscreen);
+            gfx.ui_state.fullscreen_set = gfx.ui_state.fullscreen;
+        }
         result
     }
 

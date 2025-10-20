@@ -13,6 +13,8 @@ pub struct UiState {
     fps: u32,
     #[cfg(not(target_arch = "wasm32"))]
     pub vsync: bool,
+    pub fullscreen: bool,
+    pub(crate) fullscreen_set: bool,
 }
 
 impl UiState {
@@ -21,11 +23,17 @@ impl UiState {
             fps: 0,
             #[cfg(not(target_arch = "wasm32"))]
             vsync: true,
+            fullscreen: false,
+            fullscreen_set: false,
         }
     }
 
     pub fn fps(&self) -> &u32 {
         &self.fps
+    }
+
+    pub fn is_fullscreen(&self) -> bool {
+        self.fullscreen_set
     }
 }
 
