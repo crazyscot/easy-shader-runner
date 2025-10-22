@@ -5,8 +5,7 @@ use crate::{
     ui::{Ui, UiState},
     user_event::CustomEvent,
 };
-#[cfg(not(target_arch = "wasm32"))]
-use egui_winit::winit::platform::wayland::*;
+
 use egui_winit::winit::{
     application::ApplicationHandler,
     dpi::{PhysicalPosition, PhysicalSize},
@@ -199,8 +198,11 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
                     if #[cfg(target_arch = "wasm32")] {
                         use egui_winit::winit::platform::web::WindowAttributesExtWebSys;
                         window_attributes.with_append(true)
-                    } else {
+                    } else if #[cfg(target_os = "linux")] {
+                        use egui_winit::winit::platform::wayland::WindowAttributesExtWayland;
                         window_attributes.with_name(builder.title.clone(), "")
+                    } else {
+                        window_attributes
                     }
                 }
             };
