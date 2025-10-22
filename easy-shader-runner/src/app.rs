@@ -12,7 +12,7 @@ use egui_winit::winit::{
     event::{ElementState, KeyEvent, MouseButton, MouseScrollDelta, TouchPhase, WindowEvent},
     event_loop::{ActiveEventLoop, EventLoopProxy},
     keyboard::{Key, NamedKey},
-    window::{Window, WindowId, Fullscreen},
+    window::{Fullscreen, Window, WindowId},
 };
 use std::borrow::Cow;
 use std::sync::Arc;

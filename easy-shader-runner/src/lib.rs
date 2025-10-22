@@ -76,8 +76,7 @@ pub fn run_with_runtime_compilation_2<C: ControllerTrait + Send>(
     relative_to_manifest: bool,
     // Location of librustc_codegen_spirv.so, if it's not on SHARED_LIBRARY_PATH
     rustc_codegen_spirv_location: Option<PathBuf>,
-) -> Result<(), Error>
-{
+) -> Result<(), Error> {
     setup_logging();
     let event_loop = EventLoop::with_user_event().build()?;
     // Build the shader before we pop open a window, since it might take a while.

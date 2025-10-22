@@ -33,7 +33,8 @@ pub(crate) fn compile_shader<#[cfg(feature = "hot-reload-shader")] C: Controller
     }
 
     let crate_path = if relative_to_manifest {
-        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").map_err(|_| ESRError::MissingCargoManifest)?;
+        let manifest_dir =
+            std::env::var("CARGO_MANIFEST_DIR").map_err(|_| ESRError::MissingCargoManifest)?;
         let buf = [Path::new(&manifest_dir), crate_path.as_ref()]
             .iter()
             .collect::<PathBuf>();
@@ -82,7 +83,8 @@ pub(crate) fn compile_shader<#[cfg(feature = "hot-reload-shader")] C: Controller
             }
         })
         .expect("Configuration is incorrect for watching")
-        .first_compile.ok_or(ESRError::BuildFailedQuietly)?;
+        .first_compile
+        .ok_or(ESRError::BuildFailedQuietly)?;
     #[cfg(not(feature = "hot-reload-shader"))]
     let initial_result = builder.build().map_err(ESRError::BuildFailed)?;
     Ok(handle_compile_result(initial_result))
