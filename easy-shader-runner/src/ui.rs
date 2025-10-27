@@ -9,6 +9,14 @@ use egui_winit::{
 };
 use std::sync::Arc;
 
+#[derive(Clone, Copy)]
+pub struct Options {}
+impl Default for Options {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
 pub struct UiState {
     fps: u32,
     #[cfg(not(target_arch = "wasm32"))]
@@ -18,7 +26,7 @@ pub struct UiState {
 }
 
 impl UiState {
-    pub fn new() -> Self {
+    pub fn new(_options: Options) -> Self {
         Self {
             fps: 0,
             #[cfg(not(target_arch = "wasm32"))]
@@ -39,7 +47,7 @@ impl UiState {
 
 impl Default for UiState {
     fn default() -> Self {
-        Self::new()
+        Self::new(Options::default())
     }
 }
 

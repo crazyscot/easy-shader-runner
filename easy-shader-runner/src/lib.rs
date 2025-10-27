@@ -53,6 +53,7 @@ pub struct Parameters<C: ControllerTrait + Send> {
     pub controller: C,
     /// Window title
     pub title: String,
+    options: ui::Options,
 }
 
 impl<C: ControllerTrait + Send> Parameters<C> {
@@ -62,6 +63,7 @@ impl<C: ControllerTrait + Send> Parameters<C> {
         Self {
             controller,
             title: title.into(),
+            options: Default::default(),
         }
     }
 }
