@@ -1,4 +1,5 @@
 use crate::{
+    Parameters,
     context::GraphicsContext,
     controller::ControllerTrait,
     render_pass::RenderPass,
@@ -26,31 +27,28 @@ pub struct Graphics<C: ControllerTrait> {
     window: Arc<Window>,
 }
 
-pub struct Builder<C: ControllerTrait> {
+pub struct Builder<C: ControllerTrait + Send> {
     event_proxy: EventLoopProxy<CustomEvent<C>>,
     shader_bytes: Cow<'static, [u8]>,
-    controller: C,
-    title: String,
+    params: Parameters<C>,
 }
 
-pub enum App<C: ControllerTrait> {
+pub enum App<C: ControllerTrait + Send> {
     Builder(Builder<C>),
     Building(#[cfg(target_arch = "wasm32")] Option<PhysicalSize<u32>>),
     Graphics(Box<Graphics<C>>),
 }
 
-impl<C: ControllerTrait> App<C> {
+impl<C: ControllerTrait + Send> App<C> {
     pub fn new(
         event_proxy: EventLoopProxy<CustomEvent<C>>,
         shader_bytes: Cow<'static, [u8]>,
-        controller: C,
-        title: String,
+        params: crate::Parameters<C>,
     ) -> Self {
         Self::Builder(Builder {
             event_proxy,
             shader_bytes,
-            controller,
-            title,
+            params,
         })
     }
 
@@ -183,7 +181,7 @@ impl<C: ControllerTrait> App<C> {
     }
 }
 
-impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
+impl<C: ControllerTrait + Send> ApplicationHandler<CustomEvent<C>> for App<C> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if let Self::Builder(builder) = std::mem::replace(
             self,
@@ -192,7 +190,8 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
                 None,
             ),
         ) {
-            let window_attributes = Window::default_attributes().with_title(builder.title.clone());
+            let window_attributes =
+                Window::default_attributes().with_title(builder.params.title.clone());
             let window_attributes = {
                 cfg_if::cfg_if! {
                     if #[cfg(target_arch = "wasm32")] {
@@ -200,7 +199,7 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
                         window_attributes.with_append(true)
                     } else if #[cfg(target_os = "linux")] {
                         use egui_winit::winit::platform::wayland::WindowAttributesExtWayland;
-                        window_attributes.with_name(builder.title.clone(), "")
+                        window_attributes.with_name(builder.params.title.clone(), "")
                     } else {
                         window_attributes
                     }
@@ -288,12 +287,12 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
     }
 }
 
-async fn create_graphics<C: ControllerTrait>(
+async fn create_graphics<C: ControllerTrait + Send>(
     builder: Builder<C>,
     initial_size: PhysicalSize<u32>,
     window: Window,
 ) {
-    let mut controller = builder.controller;
+    let mut controller = builder.params.controller;
     let window = Arc::new(window);
     let ctx = GraphicsContext::new(window.clone(), initial_size, &controller).await;
 
