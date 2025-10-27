@@ -53,6 +53,7 @@ pub trait ControllerTrait: 'static {
 
     /// Called every frame.
     /// return Vertex buffer and number of vertices as well as Index buffer and number of indices
+    #[allow(clippy::type_complexity)]
     fn get_vertex_index_buffer(
         &self,
     ) -> (Option<(&wgpu::Buffer, u32)>, Option<(&wgpu::Buffer, u32)>) {
