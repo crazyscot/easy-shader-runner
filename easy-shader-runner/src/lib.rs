@@ -44,6 +44,28 @@ pub enum Error {
     BuildFailedQuietly,
 }
 
+/// Common parameters and options for all shader runs.
+///
+/// There is no `Default` implementation as `controller` and `title` must always be provided.
+#[non_exhaustive]
+pub struct Parameters<C: ControllerTrait + Send> {
+    /// UI controller
+    pub controller: C,
+    /// Window title
+    pub title: String,
+}
+
+impl<C: ControllerTrait + Send> Parameters<C> {
+    /// Constructor for the mandatory fields.
+    /// Optional fields are set to their defaults.
+    pub fn new<S: Into<String>>(controller: C, title: S) -> Self {
+        Self {
+            controller,
+            title: title.into(),
+        }
+    }
+}
+
 /// Run with runtime compilation
 ///
 /// `shader_crate_path` is relative to CARGO_MANIFEST_DIR
@@ -57,7 +79,13 @@ pub fn run_with_runtime_compilation<C: ControllerTrait + Send>(
     shader_crate_path: impl AsRef<std::path::Path>,
     title: impl Into<String>,
 ) {
-    run_with_runtime_compilation_2(controller, shader_crate_path, title, true, None).unwrap();
+    run_with_runtime_compilation_2(
+        Parameters::new(controller, title),
+        shader_crate_path,
+        true,
+        None,
+    )
+    .unwrap();
 }
 
 /// Run with runtime compilation
@@ -69,10 +97,10 @@ pub fn run_with_runtime_compilation<C: ControllerTrait + Send>(
     not(target_arch = "wasm32")
 ))]
 pub fn run_with_runtime_compilation_2<C: ControllerTrait + Send>(
-    controller: C,
-    // Path of shader crate, relative to CARGO_MANIFEST_DIR
+    params: Parameters<C>,
+    // Path of shader crate (see `relative_to_manifest`!)
     shader_crate_path: impl AsRef<std::path::Path>,
-    title: impl Into<String>,
+    // If true, shader_crate_path is relative to CARGO_MANIFEST_DIR
     relative_to_manifest: bool,
     // Location of librustc_codegen_spirv.so, if it's not on SHARED_LIBRARY_PATH
     rustc_codegen_spirv_location: Option<PathBuf>,
@@ -88,41 +116,32 @@ pub fn run_with_runtime_compilation_2<C: ControllerTrait + Send>(
         rustc_codegen_spirv_location,
     )?;
     let shader_bytes = std::fs::read(shader_path)?;
-    start(event_loop, controller, shader_bytes, title.into())
+    start(event_loop, shader_bytes, params)
 }
 
-pub fn run_with_prebuilt_shader<C: ControllerTrait>(
+pub fn run_with_prebuilt_shader<C: ControllerTrait + Send, S: Into<String>>(
     controller: C,
     shader_bytes: &'static [u8],
-    title: impl Into<String>,
+    title: S,
 ) {
-    setup_logging();
-    let event_loop = EventLoop::with_user_event().build().unwrap();
-    start(event_loop, controller, shader_bytes, title.into()).unwrap();
+    run_with_prebuilt_shader_2(Parameters::new(controller, title.into()), shader_bytes).unwrap();
 }
 
-pub fn run_with_prebuilt_shader_2<C: ControllerTrait>(
-    controller: C,
+pub fn run_with_prebuilt_shader_2<C: ControllerTrait + Send>(
+    params: Parameters<C>,
     shader_bytes: &'static [u8],
-    title: impl Into<String>,
 ) -> Result<(), Error> {
     setup_logging();
     let event_loop = EventLoop::with_user_event().build()?;
-    start(event_loop, controller, shader_bytes, title.into())
+    start(event_loop, shader_bytes, params)
 }
 
-fn start<C: ControllerTrait>(
+fn start<C: ControllerTrait + Send>(
     event_loop: EventLoop<CustomEvent<C>>,
-    controller: C,
     shader_bytes: impl Into<Cow<'static, [u8]>>,
-    title: String,
+    params: Parameters<C>,
 ) -> Result<(), Error> {
-    let mut app = app::App::new(
-        event_loop.create_proxy(),
-        shader_bytes.into(),
-        controller,
-        title,
-    );
+    let mut app = app::App::new(event_loop.create_proxy(), shader_bytes.into(), params);
     Ok(event_loop.run_app(&mut app)?)
 }
 
