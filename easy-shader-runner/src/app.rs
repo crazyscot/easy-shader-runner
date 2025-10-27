@@ -298,7 +298,7 @@ async fn create_graphics<C: ControllerTrait + Send>(
 
     let ui = Ui::new(window.clone());
 
-    let ui_state = UiState::new();
+    let ui_state = UiState::new(builder.params.options);
 
     let rpass = RenderPass::new(&ctx, &builder.shader_bytes, &mut controller);
 
