@@ -66,6 +66,11 @@ impl<C: ControllerTrait + Send> Parameters<C> {
             options: Default::default(),
         }
     }
+
+    pub fn esc_key_exits(mut self, enable: bool) -> Self {
+        self.options.escape_exits = enable;
+        self
+    }
 }
 
 /// Run with runtime compilation

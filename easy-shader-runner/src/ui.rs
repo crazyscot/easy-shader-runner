@@ -10,10 +10,12 @@ use egui_winit::{
 use std::sync::Arc;
 
 #[derive(Clone, Copy)]
-pub struct Options {}
+pub struct Options {
+    pub escape_exits: bool,
+}
 impl Default for Options {
     fn default() -> Self {
-        Self {}
+        Self { escape_exits: true }
     }
 }
 
@@ -23,16 +25,18 @@ pub struct UiState {
     pub vsync: bool,
     pub fullscreen: bool,
     pub(crate) fullscreen_set: bool,
+    pub escape_exits: bool,
 }
 
 impl UiState {
-    pub fn new(_options: Options) -> Self {
+    pub fn new(options: Options) -> Self {
         Self {
             fps: 0,
             #[cfg(not(target_arch = "wasm32"))]
             vsync: true,
             fullscreen: false,
             fullscreen_set: false,
+            escape_exits: options.escape_exits,
         }
     }
 

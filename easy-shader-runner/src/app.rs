@@ -247,8 +247,8 @@ impl<C: ControllerTrait + Send> ApplicationHandler<CustomEvent<C>> for App<C> {
                 #[cfg(feature = "compute")]
                 self.update();
             }
-            WindowEvent::CloseRequested
-            | WindowEvent::KeyboardInput {
+            WindowEvent::CloseRequested => event_loop.exit(),
+            WindowEvent::KeyboardInput {
                 event:
                     KeyEvent {
                         state: ElementState::Pressed,
@@ -256,7 +256,14 @@ impl<C: ControllerTrait + Send> ApplicationHandler<CustomEvent<C>> for App<C> {
                         ..
                     },
                 ..
-            } => event_loop.exit(),
+            } => {
+                let Self::Graphics(gfx) = self else {
+                    return;
+                };
+                if gfx.ui_state.escape_exits {
+                    event_loop.exit();
+                }
+            }
             WindowEvent::KeyboardInput { event, .. } => self.keyboard_input(event),
             WindowEvent::Resized(size) => self.resize(size),
             WindowEvent::MouseInput { state, button, .. } => self.mouse_input(state, button),
