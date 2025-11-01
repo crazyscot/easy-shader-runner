@@ -57,7 +57,7 @@ pub fn run_with_runtime_compilation<C: ControllerTrait + Send>(
     shader_crate_path: impl AsRef<std::path::Path>,
     title: impl Into<String>,
 ) {
-    run_with_runtime_compilation_2(controller, shader_crate_path, title, true).unwrap();
+    run_with_runtime_compilation_2(controller, shader_crate_path, title, true, None).unwrap();
 }
 
 /// Run with runtime compilation
@@ -74,6 +74,7 @@ pub fn run_with_runtime_compilation_2<C: ControllerTrait + Send>(
     shader_crate_path: impl AsRef<std::path::Path>,
     title: impl Into<String>,
     relative_to_manifest: bool,
+    rustc_codegen_spirv_location: Option<PathBuf>,
 ) -> Result<(), Error> {
     setup_logging();
     let event_loop = EventLoop::with_user_event().build()?;
@@ -83,6 +84,7 @@ pub fn run_with_runtime_compilation_2<C: ControllerTrait + Send>(
         event_loop.create_proxy(),
         shader_crate_path,
         relative_to_manifest,
+        rustc_codegen_spirv_location,
     )?;
     let shader_bytes = std::fs::read(shader_path)?;
     start(event_loop, controller, shader_bytes, title.into())
