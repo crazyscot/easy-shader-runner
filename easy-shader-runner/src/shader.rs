@@ -59,6 +59,7 @@ pub fn compile_shader<#[cfg(feature = "hot-reload-shader")] C: ControllerTrait +
             }
         })
         .expect("Configuration is correct for watching")
+        .first_compile
         .unwrap();
     #[cfg(not(feature = "hot-reload-shader"))]
     let initial_result = builder.build().unwrap();

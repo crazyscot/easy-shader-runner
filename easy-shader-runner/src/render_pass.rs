@@ -33,6 +33,7 @@ pub struct RenderPass {
     shader_viewport: egui::Rect,
     #[cfg(feature = "emulate_constants")]
     emulate_constants_buffer: EmulateConstantsBuffer,
+    #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
     vertex_buffer_layouts: Vec<wgpu::VertexBufferLayout<'static>>,
 }
 
@@ -42,7 +43,7 @@ impl RenderPass {
         shader_bytes: &[u8],
         controller: &mut C,
     ) -> Self {
-        let (layouts, bind_groups) = controller.describe_bind_groups(&ctx);
+        let (layouts, bind_groups) = controller.describe_bind_groups(ctx);
         let bind_group_layouts = layouts.iter();
 
         #[cfg(feature = "emulate_constants")]
@@ -56,7 +57,7 @@ impl RenderPass {
             .chain([emulate_constants_bind_group])
             .collect::<Vec<_>>();
 
-        let vertex_buffer_layouts = controller.describe_vertex_buffer_layouts(&ctx);
+        let vertex_buffer_layouts = controller.describe_vertex_buffer_layouts(ctx);
         let pipeline_layouts =
             create_pipeline_layouts(ctx, &bind_group_layouts.collect::<Vec<_>>());
         let pipelines = create_pipelines(
@@ -67,7 +68,16 @@ impl RenderPass {
             shader_bytes,
         );
 
-        let ui_renderer = egui_wgpu::Renderer::new(&ctx.device, ctx.config.format, None, 1, false);
+        let ui_renderer = egui_wgpu::Renderer::new(
+            &ctx.device,
+            ctx.config.format,
+            egui_wgpu::RendererOptions {
+                msaa_samples: 1,
+                depth_stencil_format: None,
+                dithering: false,
+                predictable_texture_filtering: false,
+            },
+        );
 
         Self {
             pipelines,
@@ -78,6 +88,7 @@ impl RenderPass {
             shader_viewport: egui::Rect::NAN,
             #[cfg(feature = "emulate_constants")]
             emulate_constants_buffer,
+            #[cfg(all(feature = "hot-reload-shader", not(target_arch = "wasm32")))]
             vertex_buffer_layouts,
         }
     }
@@ -167,6 +178,7 @@ impl RenderPass {
                 timestamp_writes: None,
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: output_view,
+                    depth_slice: None,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
@@ -266,6 +278,7 @@ impl RenderPass {
                 timestamp_writes: None,
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: output_view,
+                    depth_slice: None,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Load,

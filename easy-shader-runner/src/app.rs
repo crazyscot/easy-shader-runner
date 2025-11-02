@@ -5,8 +5,7 @@ use crate::{
     ui::{Ui, UiState},
     user_event::CustomEvent,
 };
-#[cfg(not(target_arch = "wasm32"))]
-use egui_winit::winit::platform::wayland::*;
+
 use egui_winit::winit::{
     application::ApplicationHandler,
     dpi::{PhysicalPosition, PhysicalSize},
@@ -37,10 +36,10 @@ pub struct Builder<C: ControllerTrait> {
 pub enum App<C: ControllerTrait> {
     Builder(Builder<C>),
     Building(#[cfg(target_arch = "wasm32")] Option<PhysicalSize<u32>>),
-    Graphics(Graphics<C>),
+    Graphics(Box<Graphics<C>>),
 }
 
-impl<'a, C: ControllerTrait> App<C> {
+impl<C: ControllerTrait> App<C> {
     pub fn new(
         event_proxy: EventLoopProxy<CustomEvent<C>>,
         shader_bytes: Cow<'static, [u8]>,
@@ -184,8 +183,11 @@ impl<C: ControllerTrait> ApplicationHandler<CustomEvent<C>> for App<C> {
                     if #[cfg(target_arch = "wasm32")] {
                         use egui_winit::winit::platform::web::WindowAttributesExtWebSys;
                         window_attributes.with_append(true)
-                    } else {
+                    } else if #[cfg(target_os = "linux")] {
+                        use egui_winit::winit::platform::wayland::WindowAttributesExtWayland;
                         window_attributes.with_name(builder.title.clone(), "")
+                    } else {
+                        window_attributes
                     }
                 }
             };
@@ -297,6 +299,6 @@ async fn create_graphics<C: ControllerTrait>(
 
     builder
         .event_proxy
-        .send_event(CustomEvent::CreateWindow(gfx))
+        .send_event(CustomEvent::CreateWindow(Box::new(gfx)))
         .ok();
 }

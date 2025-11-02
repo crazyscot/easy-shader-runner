@@ -19,6 +19,7 @@ impl GraphicsContext {
             &wgpu::InstanceDescriptor {
                 backends: wgpu::Backends::PRIMARY,
                 flags: wgpu::InstanceFlags::default(),
+                memory_budget_thresholds: wgpu::MemoryBudgetThresholds::default(),
                 backend_options: wgpu::BackendOptions::default(),
             }
             .with_env(),
@@ -89,8 +90,7 @@ impl GraphicsContext {
                 .get_default_config(adapter, size.width, size.height)
                 .unwrap_or_else(|| {
                     panic!(
-                        "Missing formats/present modes in surface capabilities: {:#?}",
-                        capabilities
+                        "Missing formats/present modes in surface capabilities: {capabilities:#?}"
                     )
                 });
             surface_config.present_mode = wgpu::PresentMode::AutoVsync;
