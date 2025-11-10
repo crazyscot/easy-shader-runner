@@ -68,35 +68,13 @@ impl<C: ControllerTrait + Send> Parameters<C> {
 
 /// Run with runtime compilation
 ///
-/// `shader_crate_path` is relative to CARGO_MANIFEST_DIR
-#[cfg(all(
-    any(feature = "runtime-compilation", feature = "hot-reload-shader"),
-    not(target_arch = "wasm32")
-))]
-pub fn run_with_runtime_compilation<C: ControllerTrait + Send>(
-    controller: C,
-    // Path of shader crate, relative to CARGO_MANIFEST_DIR
-    shader_crate_path: impl AsRef<std::path::Path>,
-    title: impl Into<String>,
-) {
-    run_with_runtime_compilation_2(
-        Parameters::new(controller, title),
-        shader_crate_path,
-        true,
-        None,
-    )
-    .unwrap();
-}
-
-/// Run with runtime compilation
-///
 /// If `relative_to_manifest` is true, `shader_crate_path` is relative to CARGO_MANIFEST_DIR.
 /// If not, it is a standard path (may be absolute or relative).
 #[cfg(all(
     any(feature = "runtime-compilation", feature = "hot-reload-shader"),
     not(target_arch = "wasm32")
 ))]
-pub fn run_with_runtime_compilation_2<C: ControllerTrait + Send>(
+pub fn run_with_runtime_compilation<C: ControllerTrait + Send>(
     params: Parameters<C>,
     // Path of shader crate (see `relative_to_manifest`!)
     shader_crate_path: impl AsRef<std::path::Path>,
@@ -118,15 +96,7 @@ pub fn run_with_runtime_compilation_2<C: ControllerTrait + Send>(
     start(event_loop, shader_bytes, params)
 }
 
-pub fn run_with_prebuilt_shader<C: ControllerTrait + Send, S: Into<String>>(
-    controller: C,
-    shader_bytes: &'static [u8],
-    title: S,
-) {
-    run_with_prebuilt_shader_2(Parameters::new(controller, title.into()), shader_bytes).unwrap();
-}
-
-pub fn run_with_prebuilt_shader_2<C: ControllerTrait + Send>(
+pub fn run_with_prebuilt_shader<C: ControllerTrait + Send>(
     params: Parameters<C>,
     shader_bytes: &'static [u8],
 ) -> Result<(), Error> {
