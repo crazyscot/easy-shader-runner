@@ -148,7 +148,8 @@ impl<C: ControllerTrait + Send> App<C> {
 
         if gfx.ui_state.fullscreen != gfx.ui_state.fullscreen_set {
             let desired = if gfx.ui_state.fullscreen {
-                // untested, but Borderless(None) seems to be the preferred way to do this on macOS
+                // Borderless(None) seems to be the preferred way to do this on macOS.
+                // Seems to work fine on Windows and Linux as well.
                 Some(Fullscreen::Borderless(None))
             } else {
                 None
