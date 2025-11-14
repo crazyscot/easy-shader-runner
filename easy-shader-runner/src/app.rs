@@ -248,8 +248,8 @@ impl<C: ControllerTrait + Send> ApplicationHandler<CustomEvent<C>> for App<C> {
                 #[cfg(feature = "compute")]
                 self.update();
             }
-            WindowEvent::CloseRequested
-            | WindowEvent::KeyboardInput {
+            WindowEvent::CloseRequested => event_loop.exit(),
+            WindowEvent::KeyboardInput {
                 event:
                     KeyEvent {
                         state: ElementState::Pressed,
@@ -257,7 +257,14 @@ impl<C: ControllerTrait + Send> ApplicationHandler<CustomEvent<C>> for App<C> {
                         ..
                     },
                 ..
-            } => event_loop.exit(),
+            } => {
+                let Self::Graphics(gfx) = self else {
+                    return;
+                };
+                if gfx.ui_state.escape_exits {
+                    event_loop.exit();
+                }
+            }
             WindowEvent::KeyboardInput { event, .. } => self.keyboard_input(event),
             WindowEvent::Resized(size) => self.resize(size),
             WindowEvent::MouseInput { state, button, .. } => self.mouse_input(state, button),
@@ -299,7 +306,7 @@ async fn create_graphics<C: ControllerTrait + Send>(
 
     let ui = Ui::new(window.clone());
 
-    let ui_state = UiState::new();
+    let ui_state = UiState::new(builder.params.options);
 
     let rpass = RenderPass::new(&ctx, &builder.shader_bytes, &mut controller);
 

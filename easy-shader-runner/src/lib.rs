@@ -53,6 +53,7 @@ pub struct Parameters<C: ControllerTrait + Send> {
     pub controller: C,
     /// Window title
     pub title: String,
+    options: ui::Options,
 }
 
 impl<C: ControllerTrait + Send> Parameters<C> {
@@ -62,7 +63,13 @@ impl<C: ControllerTrait + Send> Parameters<C> {
         Self {
             controller,
             title: title.into(),
+            options: Default::default(),
         }
+    }
+
+    pub fn esc_key_exits(mut self, enable: bool) -> Self {
+        self.options.escape_exits = enable;
+        self
     }
 }
 
@@ -80,6 +87,7 @@ pub fn run_with_runtime_compilation<C: ControllerTrait + Send>(
     shader_crate_path: impl AsRef<std::path::Path>,
     // If true, shader_crate_path is relative to CARGO_MANIFEST_DIR
     relative_to_manifest: bool,
+    // Location of librustc_codegen_spirv.so, if it's not on SHARED_LIBRARY_PATH
     rustc_codegen_spirv_location: Option<PathBuf>,
 ) -> Result<(), Error> {
     setup_logging();
