@@ -16,7 +16,7 @@ repository = "https://github.com/abel465/easy-shader-runner"
 
 [workspace.dependencies]
 bytemuck = { version = "1.22.0", default-features = false }
-glam = { version = "0.30.8", default-features = false }
+glam = { version = "0.31.0", default-features = false }
 
 [workspace.dependencies.spirv-std]
 git = "https://github.com/Rust-GPU/rust-gpu"
@@ -28,3 +28,7 @@ rev = "b3eda4df9814b6176d3c0844eb67f70a22ebb378"
 
 [profile.dev]
 package.spirv-tools-sys.opt-level = 1
+
+# TEMP: rust-gpu currently depends on glam 0.30.8; synchronise on 0.31 for now
+[patch.'https://github.com/Rust-GPU/rust-gpu']
+glam = { version = "0.31.0" }
