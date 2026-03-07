@@ -15,8 +15,8 @@ license = "MIT"
 repository = "https://github.com/abel465/easy-shader-runner"
 
 [workspace.dependencies]
-bytemuck = { version = "1.22.0", default-features = false }
-glam = { version = "0.31.0", default-features = false }
+bytemuck = { version = "1.25.0", default-features = false }
+glam = { version = "0.32.1", default-features = false }
 
 [workspace.dependencies.spirv-std]
 git = "https://github.com/Rust-GPU/rust-gpu"
